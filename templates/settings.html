@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block base %}
+    <link type="text/css" href="{{STATIC_URL}}css/iam_user.css" rel="stylesheet">
+  <div class="container_block settings">
+    <div class="row form_row">
+	       <div class="col-md-offset-3 col-md-6 col-ms-offset-3 col-sm-offset-2 col-sm-8 col-sm-offset-2 col-xs-12 gradient_panel">
+            <form role="form" class="col-md-12 col-sm-12 col-xs-12 go-right" id="user_settings_form" method="post">{% csrf_token %}
+      <h2 class="title">User Settings</h2>
+      <div class="form-group">
+      <input type="text" class="form-control" value="{{request.user.username}}" readonly>
+      <label for="name">UserName</label>
+    </div>
+    <div class="form-group">
+      <input type="text" class="form-control" value="{{request.user.email}}" readonly>
+      <label for="name">Email</label>
+    </div>
+      <div class="form-group" id="access_key">
+      <input name="access_key" type="text" class="form-control" value="{{user.access_key}}">
+      <label for="name">Access Key</label>
+    </div>
+
+    <div class="form-group" id="secret_key" >
+      <input name="secret_key" type="text" class="form-control" value="{{user.secret_key}}">
+      <label for="name">Secret Key</label>
+    </div>
+    <div class="row btn_row">
+                <div class="col-xs-12 col-md-12 btn_col"><button class="btn btn-success btn-block btn-lg" type="submit">Update</button></div>
+            </div>
+    </form>
+         </div>
+	</div>
+</div>
+<script type="text/javascript">
+      $(document).ready(function(){
+      $('#user_settings_form').submit(function(e) {
+        e.preventDefault();
+        $.post('{% url "settings" %}', $('#user_settings_form').serialize(), function(data) {
+          if (data.error){
+            $("p.error").remove();
+            for (var key in data.response) {
+            $('#' + key).after('<p class="error">' + data.response[key] + '</p>');
+          }
+          }
+          else{
+            window.location = "{% url 'iam_users_list' %}"
+          } 
+        },"json");
+      });
+      });
+      </script>
+</html>
+{% endblock %}

@@ -1,0 +1,40 @@
+
+@media(min-width: 768px) and (max-width: 991px){
+	body{
+		background: yellow;
+	}
+	.container_block{
+		width: 100%;
+	}
+	 .checkbox_block p{
+        margin-left:25px;
+    }
+}
+
+@media(min-width: 480px) and (max-width: 767px){
+	body{
+		background: green;
+	}
+	.container_block{
+		width: 100%;
+	}
+	 .checkbox_block p{
+        margin-left:25px;
+    }
+}
+
+@media(min-width: 240px) and (max-width: 479px){
+	body{
+		background: red;
+	}
+	.container_block{
+		width: 100%;
+	}
+	 .checkbox_block p{
+        margin-left:25px;
+    }
+}
+
+
+
+

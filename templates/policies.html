@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block base %}
+<div class="container_block iam_user_list mar_auto">
+	<div class="row form_row" >
+		<div class="col-md-12 users_list">
+			<div class="panel panel-primary">
+				<div class="panel-heading">Policies List</h3>
+				</div>
+					<form action="{% url 'policies_list' iam_user.id %}" method="post">{% csrf_token %}
+
+			<div class="table-responsive">
+				<table class="table table-hover table-bordered table-striped iam-list policy_table" id="dev-table">
+				<thead>
+					<tr>
+					<th></th>
+					<th>PolicyName</th>
+					<th>Created Date</th>
+					<th>ARN</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for policy in response %}
+					<tr>
+					<td><input type="checkbox" name="policy" value="{{ policy.Arn }}" {% for p in iam_user.policies.all %}{% if p.arn == policy.Arn %}checked{% endif %}{% endfor %}></td>
+					<td>{{ policy.PolicyName}}</td>
+					<td>{{ policy.CreateDate}}</td>
+					<td>{{ policy.Arn}}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+			</div>
+			<div class="row btn_row">
+				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success btn-block btn-lg" type="submit">Attach Policy</button></div>
+			</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+
+{% endblock %}

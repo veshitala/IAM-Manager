@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block base %}
+
+<div class="container_block settings">
+    <div class="row form_row">
+     <div class="col-md-offset-3 col-md-6 col-ms-offset-3 col-sm-offset-2 col-sm-8 col-sm-offset-2 col-xs-12 gradient_panel">
+		<form role="form" class="col-md-12 go-right" id="add_iam_user_form" method="post">{% csrf_token %}
+			<h2 class="title">IAM User</h2>
+			<div class="form-group" id="username">
+			<input name="username" type="text" class="form-control">
+			<label for="name">UserName</label>
+		</div>
+
+		<div class="form-group" id="email">
+			<input name="email" type="email" class="form-control">
+			<label for="phone">Email</label>
+		</div>
+		<div class="form-group" id="password">
+			<input  name="password" type="password" class="form-control">
+			<label for="name">Password</label>
+		</div>
+		<div class="form-group checkbox checkbox_block text-left">
+			<div class="col-md-1 col-xs-1 text-left"><input type="checkbox" name="generate_keys"></div>
+      <div class="col-md-11 col-xs-11">
+      <span>Generate an access key for user</span>
+      <p>Users need access keys to make secure REST or Query protocol requests to AWS service APIs.</p>
+      </div>
+		</div>
+		<div class="row btn_row">
+                <div class="col-xs-12 col-md-12 btn_col"><button class="btn btn-success btn-block btn-lg" type="submit">Create</button></div>
+            </div>
+		</form>
+    </div>
+	</div>
+</div>
+</body>
+<script type="text/javascript">
+      $(document).ready(function(){
+      $('#add_iam_user_form').submit(function(e) {
+        e.preventDefault();
+        $.post('{% url "add_iam_user" %}', $('#add_iam_user_form').serialize(), function(data) {
+          if (data.error){
+          	$("p.error").remove();
+            for (var key in data.response) {
+            $('#' + key).after('<p class="error">' + data.response[key] + '</p>');
+          }
+          if (data.message){
+          	alert(data.message)
+          }
+          }
+          else{
+            window.location = "{% url 'iam_users_list' %}"
+          }
+        },"json");
+      });
+      });
+      </script>
+      {% endblock %}
+</html>

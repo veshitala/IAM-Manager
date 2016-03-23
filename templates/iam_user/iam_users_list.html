@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block base %}
+<div class="container_block iam_user_list mar_auto">
+    	<div class="row form_row" >
+			<div class="col-md-12 users_list">
+				<div class="panel panel-primary">
+					<div class="panel-heading">
+						<h3 class="panel-title">IAM Users List</h3>
+						<div class="pull-right"  style="font-size:20px;">
+								<a href="{% url 'add_iam_user' %}" style="color:#fff;"><i class="fa fa-plus-circle"></i></a>
+						</div>
+					</div>
+					<div class="table-responsive">
+					<table class="table table-hover table-bordered table-striped iam-list" id="dev-table">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>UserName</th>
+								<th>Created Date</th>
+								<th>Access Key</th>
+								<th>Details</th>
+							</tr>
+						</thead>
+						<tbody>
+						{% for user in response %}
+							<tr>
+								<td>{{ user.UserId}}</td>
+								<td>{{ user.UserName}}</td>
+								<td>{{ user.CreateDate}}</td>
+								<td>{% with user.UserName|get_iam_user as iam_user %}{{ iam_user.0.access_key }}{% endwith %}</td>
+								<td class="actions" align="center"><a href="{% url 'iam_user_detail' user.UserName %}"><i class="fa fa-eye"></i></a></td>
+								</tr>
+						{% endfor %}
+						</tbody>
+					</table>
+					</div>
+				</div>
+			</div>
+			
+		</div>
+	</div>
+
+
+{% endblock %}

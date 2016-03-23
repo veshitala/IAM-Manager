@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block base %}
+<div class="container_block mar_auto user_det_top settings">
+      <div class="row">
+        <div>
+          <div class="panel panel-info user_detail">
+            <div class="panel-heading">
+              <h3 class="panel-title">{{response.UserName}}</h3>
+            </div>
+            <div class="panel-body">
+              <div class="row">
+              <div class="table-responsive">
+                  <table class="table table-user-information iam_detail_table">
+                    <tbody>
+                      <tr>
+                        <td>UserName:</td>
+                        <td>{{response.UserName}}</td>
+                      </tr>
+                      <tr>
+                        <td>Created Date:</td>
+                        <td>{{response.CreateDate}}</td>
+                      </tr>
+                      <tr>
+                        <td>Password</td>
+                        <td>{% with response.UserName|get_iam_user as iam_user %}{{ iam_user.0.password }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span><a class="attach_policy" href="{% url 'iam_user_change_password' iam_user.0.id %}">Change Password</a></span>{% endwith %}</td>
+                      </tr>
+                             <tr>
+                        <td>User ARN</td>
+                        <td>{{response.Arn}}</td>
+                      </tr>
+                        <tr>
+                        <td>Accesskey</td>
+                        <td>{% with response.UserName|get_iam_user as iam_user %}{{ iam_user.0.access_key }}{% endwith %}</td>
+                      </tr>
+                      <tr>
+                        <td>SecretKey</td>
+                        <td>{% with response.UserName|get_iam_user as iam_user %}{{ iam_user.0.secret_key }}{% endwith %}</td>
+                      </tr>
+                      <tr>
+                        <td>Status</td>
+                        <td>{% with response.UserName|get_iam_user as iam_user %}{% if iam_user.0.status %}Active{% else %}InActive{% endif %}{% endwith %}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Policies</td>
+                        <td><span>{% with response.UserName|get_iam_user as iam_user %}<a class="attach_policy" href="{% url 'policies_list' iam_user.0.id %}">Attach Policy</a>{% endwith %}</span><br>
+                        <span>{% with response.UserName|get_iam_user as iam_user %}
+                        {% if iam_user.0.policies.all %}
+                        <table class="table table-hover table-bordered user-policy-list" id="dev-table">
+            <thead>
+              <tr>
+              <td>Policy ARN</td>
+              <td align="center">Actions</td>
+              </tr>
+              </thead>
+              <tbody>
+                          {% for p in iam_user.0.policies.all %}
+
+              <tr>
+                          <td>{{ p.arn }}</td>
+                          <td class="actions" align="center"><a href="{% url 'detach_user_policies' iam_user.0.id p.id %}"><i class="fa fa-trash"></i></a></td>
+                        </tr>
+                          {% endfor %}
+
+                        </tbody>
+                        </table>
+                        {% endif %}
+                        {% endwith %}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  </div>
+                  
+              </div>
+            </div>
+                
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endblock%}

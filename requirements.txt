@@ -4,6 +4,8 @@ botocore==1.4.6
 django-appconf==1.0.1
 django-compressor==2.0
 docutils==0.12
+gunicorn==19.4.5
 jmespath==0.9.0
 python-dateutil==2.5.1
 six==1.10.0
+whitenoise==3.0

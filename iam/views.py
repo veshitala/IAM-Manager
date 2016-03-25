@@ -7,108 +7,77 @@ import json
 from django.contrib.auth.models import User
 import boto3
 from django.core.urlresolvers import reverse
-
+from botocore.exceptions import ClientError, ValidationError
 
 '''
     Authored by:Swetha
     Other Modules Involved:
-    Tasks Involved:Login
-    Description:when user hits the url "^$" this function is called
-    First this function renders to login template,
-    when user is provided with correct data, user gets login only when this user is active and renders to base template,
-    when user is provided with incorrect data, user gets an error message,
-    when user is provided with correct data, but the user is inactive, provides an error message.
+    Tasks Involved:Home
+    Description:when user hits the url "^home/$" this function is called
+    This function renders to base template,
+    After log in with thier Access keys and Secret Keys.
     '''
 
 
-def user_login(request):
-    if request.method == "POST":
-        user = authenticate(username=request.POST.get("username"), password=request.POST.get("password"))
-        if user is not None:
-            if user.is_active:
-                login(request, user)
-                data = {"error": False, "message": "Loggedin Successfully"}
-                return HttpResponse(json.dumps(data))
-            else:
-                data = {"error": True, "message": "User is not active."}
-                return HttpResponse(json.dumps(data))
-        else:
-            data = {"error": True, "message": "Username and Password were incorrect."}
-        return HttpResponse(json.dumps(data))
-    else:
-        if request.user.is_authenticated():
-            user = User.objects.get(email=request.user.email)
-            return render(request, "base.html", {"user": user})
-    return render(request, "login.html")
+def home(request):
+    return render(request, "base.html")
 
 '''
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Logout
     Description:when user hits the url "^/logout$" this function is called, user gets logged out and redirected to login template.
+    Here when user log out respective user access key, secret key, username will be removed from session.
     '''
 
 
 def user_logout(request):
+    if 'access_key' in request.session:
+        request.session['access_key'] = None
+    if 'secret_key' in request.session:
+        request.session['secret_key'] = None
+    if 'client_username' in request.session:
+        request.session['client_username'] = None
     logout(request)
     return HttpResponseRedirect('/')
-
-'''
-    Authored by:Swetha
-    Other Modules Involved:
-    Tasks Involved:Register
-    Description:when user hits the url "^/register$" this function is called
-    First this function renders to register template,
-    when user is provided with correct data, user gets registered and redirected to login template,
-    when user is provided with incorrect data, user gets an error message,
-    '''
-
-
-def user_register(request):
-    if request.method == 'POST':
-        new_member = RegisterForm(request.POST)
-        if new_member.is_valid():
-            new_member = User.objects.create(email=request.POST.get("email"), username=request.POST.get("username"), first_name=request.POST.get("first_name"))
-            new_member.set_password(request.POST.get("password"))
-            new_member.save()
-            data = {"error": False}
-        else:
-            data = {"error": True, "response": new_member.errors}
-        return HttpResponse(json.dumps(data))
-    return render(request, "register.html")
 
 
 '''
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Settings
-    Description:when user hits the url "^/settings$" this function is called
+    Description:when user hits the url "^$" this function is called
     First this function renders to settings template,
-    Here user creates access key and secret keys,
+    Here user log in by entering valid access key and secret keys, then these varibles are stored in django session for further use.
     '''
 
 
 def settings(request):
-    user_obj = User.objects.get(id=request.user.id)
-    user_profile = UserProfile.objects.filter(user=request.user)
-    if request.method == 'POST':
-        if not user_profile:
-            user = UserProfileForm(request.POST)
-            if user.is_valid():
-                obj = user.save(commit=False)
-                obj.user = user_obj
-                obj.save()
+    if request.method == "POST":
+        client = boto3.client(
+           'iam',
+           aws_access_key_id=request.POST.get("access_key"),
+           aws_secret_access_key=request.POST.get("secret_key")
+        )
+        try:
+            if request.POST.get("access_key") and request.POST.get("secret_key") and request.POST.get("username"):
+                if 'access_key' not in request.session:
+                    request.session['access_key'] = request.POST.get("access_key")
+                if 'secret_key' not in request.session:
+                    request.session['secret_key'] = request.POST.get("secret_key")
+                if 'client_username' not in request.session:
+                    request.session['client_username'] = request.POST.get("username")
+                client.get_user(UserName=request.POST.get("username"))
+
                 data = {"error": False}
             else:
-                data = {"error": True, "response": user.errors}
+                data = {"error": True, "response": "Please Enter Username, Access key, Secret Key."}
             return HttpResponse(json.dumps(data))
-        else:
-            user_profile[0].access_key = request.POST.get("access_key")
-            user_profile[0].secret_key = request.POST.get("secret_key")
-            user_profile[0].save()
-            data = {"error": False}
+
+        except ClientError as e:
+            data = {"error": True, "response": str(e)}
             return HttpResponse(json.dumps(data))
-    return render(request, "settings.html", {"user": user_profile[0] if user_profile else None})
+    return render(request, "login.html")
 
 
 '''
@@ -124,32 +93,47 @@ def settings(request):
 
 
 def add_iam_user(request):
-    user_profile = UserProfile.objects.get(user=request.user)
     client = boto3.client(
        'iam',
-       aws_access_key_id=user_profile.access_key,
-       aws_secret_access_key=user_profile.secret_key
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
     )
-    user_profile = UserProfile.objects.filter(user=request.user)
+
+    client_ec2 = boto3.client(
+       'ec2', region_name="us-west-2",
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
+    )
+    ec2 = boto3.resource(
+       'ec2',
+       region_name="us-west-2",
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
+    )
+
+    client_s3 = boto3.client(
+        's3',
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
+
+    response_buckets = client_s3.list_buckets()
+
+    response_inst = client_ec2.describe_instances(
+            DryRun=False,
+            Filters=[],
+            MaxResults=6
+        )
     if request.method == "POST":
-        new_iam_user = IAMUserForm(request.POST)
-        if user_profile:
-            if new_iam_user.is_valid():
-                client.create_user(Path="/", UserName=request.POST.get("username"))
-                iam_user = new_iam_user.save()
-                if request.POST.get("generate_keys"):
-                    response = client.create_access_key(UserName=iam_user.username)
-                    iam_user.access_key = response["AccessKey"]["AccessKeyId"]
-                    iam_user.secret_key = response["AccessKey"]["SecretAccessKey"]
-                    iam_user.status = True
-                    iam_user.save()
-                data = {"error": False}
-            else:
-                data = {"error": True, "response": new_iam_user.errors}
+        if request.POST.get("username"):
+            client.create_user(Path="/", UserName=request.POST.get("username"))
+            if request.POST.get("generate_keys"):
+                response = client.create_access_key(UserName=request.POST.get("username"))
+            data = {"error": False}
         else:
-            data = {"error": True, "message": "Please Update Settings"}
+            data = {"error": True, "response": "Please enter IAM username"}
         return HttpResponse(json.dumps(data))
-    return render(request, "iam_user/add_iam_user.html")
+    return render(request, "iam_user/add_iam_user.html", {"response_inst": response_inst["Reservations"],
+                           "response_buckets": response_buckets["Buckets"]})
 
 
 '''
@@ -163,11 +147,10 @@ def add_iam_user(request):
 
 
 def iam_users_list(request):
-    user_profile = UserProfile.objects.get(user=request.user)
     client = boto3.client(
        'iam',
-       aws_access_key_id=user_profile.access_key,
-       aws_secret_access_key=user_profile.secret_key
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
     )
     response = client.list_users()
     return render(request, "iam_user/iam_users_list.html", {"response": response["Users"]})
@@ -184,58 +167,62 @@ def iam_users_list(request):
 
 
 def iam_user_detail(request, user_name):
-    user_profile = UserProfile.objects.get(user=request.user)
     client = boto3.client(
        'iam',
-       aws_access_key_id=user_profile.access_key,
-       aws_secret_access_key=user_profile.secret_key
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
     )
+
+    if request.GET.get("generate_keys"):
+        response = client.create_access_key(UserName=user_name)
+        return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
+
     response = client.get_user(UserName=user_name)
-    response1 = client.list_policies(
-            Scope='All',
-            OnlyAttached=False,
-        )
-    return render(request, "iam_user/iam_user_detail.html", {"response": response["User"]})
+
+    user_policies = client.list_attached_user_policies(
+        UserName=response["User"]["UserName"]
+    )
+
+    user_access_keys = client.list_access_keys(
+        UserName=response["User"]["UserName"],
+    )
+
+    return render(request, "iam_user/iam_user_detail.html", {"response": response["User"],
+                           "user_policies": user_policies["AttachedPolicies"],
+                           "user_name": user_name, "user_access_keys": user_access_keys["AccessKeyMetadata"]
+                           })
 
 
-def iam_user_change_password(request, iam_user_id):
-    user_profile = UserProfile.objects.get(user=request.user)
+def iam_user_change_password(request, user_name):
     client = boto3.client(
        'iam',
-       aws_access_key_id=user_profile.access_key,
-       aws_secret_access_key=user_profile.secret_key
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
     )
-    iam_user = IAMUser.objects.get(id=iam_user_id)
     if request.method == 'POST':
-        validate_changepwd = ResetPasswordForm(request.POST)
-        if validate_changepwd.is_valid():
+        if request.POST.get("new_pwd") and request.POST.get("confirm_pwd"):
             if request.POST.get("new_pwd") != request.POST.get("confirm_pwd"):
-                data = {"error": True, 'response': {"confirm_pwd": "Confirm Password should match with Password."}}
+                data = {"error": True, 'response': "Confirm Password should match with Password."}
                 return HttpResponse(json.dumps(data))
             elif request.POST.get("new_pwd") == request.POST.get("confirm_pwd"):
-                iam_user.password = request.POST.get("new_pwd")
-                respnse = client.get_account_password_policy()
                 response = client.create_login_profile(
-                    UserName=iam_user.username,
+                    UserName=user_name,
                     Password=request.POST.get("new_pwd"),
                     PasswordResetRequired=False
                 )
-                iam_user.save()
                 data = {"error": False}
                 return HttpResponse(json.dumps(data))
         else:
-            data = {'error': True, 'response': validate_changepwd.errors}
+            data = {'error': True, 'response': "Please enter new password and confirm password."}
             return HttpResponse(json.dumps(data))
     return render(request, 'iam_user/change_password.html')
 
 
-def policies_list(request, iam_user_id):
-    iam_user = IAMUser.objects.get(id=iam_user_id)
-    user_profile = UserProfile.objects.get(user=request.user)
+def policies_list(request, user_name):
     client = boto3.client(
        'iam',
-       aws_access_key_id=user_profile.access_key,
-       aws_secret_access_key=user_profile.secret_key
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
     )
     response = client.list_policies(
             Scope='All',
@@ -243,32 +230,23 @@ def policies_list(request, iam_user_id):
             MaxItems=10
             )
     if request.method == "POST":
-        iam_user.policies.clear()
         for policy in request.POST.getlist("policy"):
-            policy, created = Policy.objects.get_or_create(arn=policy)
             attach_policy_to_user = client.attach_user_policy(
-                UserName=iam_user.username,
-                PolicyArn=policy.arn
+                UserName=user_name,
+                PolicyArn=policy
             )
-            iam_user.policies.add(policy)
-        return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': iam_user.username}))
-    return render(request, "policies.html", {"response": response["Policies"], "iam_user": iam_user})
+        return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
+    return render(request, "policies.html", {"response": response["Policies"], "user_name": user_name})
 
 
-def detach_user_policies(request, iam_user_id, policy_id):
-    user_profile = UserProfile.objects.get(user=request.user)
+def detach_user_policies(request, user_name):
     client = boto3.client(
        'iam',
-       aws_access_key_id=user_profile.access_key,
-       aws_secret_access_key=user_profile.secret_key
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
     )
-    iam_user = IAMUser.objects.get(id=iam_user_id)
-    policy = Policy.objects.get(id=policy_id)
     response = client.detach_user_policy(
-        UserName=iam_user.username,
-        PolicyArn=policy.arn
+        UserName=user_name,
+        PolicyArn=request.GET.get("policy_arn")
     )
-    p = iam_user.policies.filter(id=policy.id)
-    p.delete()
-    policy.delete()
-    return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': iam_user.username}))
+    return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))

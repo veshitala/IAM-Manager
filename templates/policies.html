@@ -7,7 +7,7 @@
 			<div class="panel panel-primary">
 				<div class="panel-heading">Policies List</h3>
 				</div>
-					<form action="{% url 'policies_list' iam_user.id %}" method="post">{% csrf_token %}
+					<form action="{% url 'policies_list' user_name  %}" method="post">{% csrf_token %}
 
 			<div class="table-responsive">
 				<table class="table table-hover table-bordered table-striped iam-list policy_table" id="dev-table">

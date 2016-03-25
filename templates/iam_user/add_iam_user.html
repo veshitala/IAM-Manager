@@ -27,6 +27,60 @@
       <p>Users need access keys to make secure REST or Query protocol requests to AWS service APIs.</p>
       </div>
 		</div>
+    <div class="form-group checkbox checkbox_block text-left">
+      <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" class="ec2_checkbox" name="ec2" value="ec2"></div>
+      <div class="col-md-11 col-xs-11">
+      <span>EC2</span>
+      </div>
+    </div>
+
+    <div class="form-group checkbox checkbox_block text-left">
+      <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" name="rds" class="rds_checkbox" value="rds"></div>
+      <div class="col-md-11 col-xs-11">
+      <span>RDS</span>
+      </div>
+    </div>
+
+    <div class="form-group checkbox checkbox_block text-left">
+      <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" name="s3" class="s3_checkbox" value="s3"></div>
+      <div class="col-md-11 col-xs-11">
+      <span>S3</span>
+      </div>
+    </div>
+    <div class="form-group policy" id="policy_name" style="display:none;">
+    <input type="text" name="policy_name" class="form-control">
+    <label for="name">Policy Name</label>
+    </div>
+
+    <div class="form-group" id="ec2_div" style="display:none;">
+    <select name="ec2_instances" class="form-control">
+      <option>Please select option</option>
+    {% for instance in response_inst %}
+    {% for i in instance.Instances %}
+      <option value="{{ i.KeyName }}">{{ i.KeyName }}</option>
+    {% endfor %}
+    {% endfor %}
+    </select>
+    </div>
+    <div class="form-group" id="s3_div" style="display:none;">
+    <select name="s3_buckets" class="form-control">
+      <option>Please select option</option>
+      {% for bucket in response_buckets %}
+      <option>{{ bucket.Name }}</option>
+    {% endfor %}
+      <label for="name">S3 buckets</label>
+    </select>
+    </div>
+    <div class="form-group" id="rds_div" style="display:none;">
+    <select name="rds" class="form-control">
+      {% for instance in response_inst %}
+      <option>Please select option</option>
+    {% endfor %}
+      <label for="name">RDS</label>
+    </select>
+    </div>
+
+    <p id="error"></p>
 		<div class="row btn_row">
                 <div class="col-xs-12 col-md-12 btn_col"><button class="btn btn-success btn-block btn-lg" type="submit">Create</button></div>
             </div>
@@ -42,8 +96,8 @@
         $.post('{% url "add_iam_user" %}', $('#add_iam_user_form').serialize(), function(data) {
           if (data.error){
           	$("p.error").remove();
-            for (var key in data.response) {
-            $('#' + key).after('<p class="error">' + data.response[key] + '</p>');
+            if (data.response) {
+            $('#error').after('<p class="error">' + data.response + '</p>');
           }
           if (data.message){
           	alert(data.message)
@@ -55,6 +109,32 @@
         },"json");
       });
       });
+      $(".ec2_checkbox").change(function(e){
+        e.preventDefault();
+        if ($(".ec2_checkbox").val() == "ec2"){
+        $("#ec2_div").show()
+      }
+    });
+      $(".s3_checkbox").change(function(e){
+        e.preventDefault();
+
+      if ($(".s3_checkbox").val() == "s3"){
+        $("#s3_div").show()
+      }
+    });
+      $(".rds_checkbox").change(function(e){
+        e.preventDefault();
+      if ($(".rds_checkbox").val() == "rds"){
+        $("#rds_div").show()
+      }
+      });
+
+ $(".ec2_checkbox").change(function(e){
+        e.preventDefault();
+        if ($(".ec2_checkbox").val() == "ec2"){
+        $(".policy").show()
+      }
+    });
       </script>
       {% endblock %}
 </html>

@@ -1,13 +1,12 @@
 from django.shortcuts import render
-from django.contrib.auth import authenticate, login, logout
-from django.http.response import HttpResponse, HttpResponseRedirect, Http404
+from django.contrib.auth import logout
+from django.http.response import HttpResponse, HttpResponseRedirect
 from iam.models import *
 from iam.forms import *
 import json
-from django.contrib.auth.models import User
 import boto3
 from django.core.urlresolvers import reverse
-from botocore.exceptions import ClientError, ValidationError
+from botocore.exceptions import ClientError
 
 '''
     Authored by:Swetha
@@ -88,7 +87,8 @@ def settings(request):
     First this function renders to add_iam_user template,
     New IAM user can create only when User updated settings(Access key, secret Keys).
     Connecting to boto3 IAM client with AWS Access key and Secret Keys.
-    when post data is requested, new IAM user is created, when user selects to generate access and secret keys then acess keys are generated and saved in our database.
+    when post data is requested, new IAM user is created, when user selects to generate access and
+    secret keys then acess keys are generated and saved in our database.
     '''
 
 
@@ -104,12 +104,14 @@ def add_iam_user(request):
        aws_access_key_id=request.session["access_key"],
        aws_secret_access_key=request.session["secret_key"]
     )
-    ec2 = boto3.resource(
-       'ec2',
-       region_name="us-west-2",
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+
+    # incomplete code will be impleted later.
+    # ec2 = boto3.resource(
+    #    'ec2',
+    #    region_name="us-west-2",
+    #    aws_access_key_id=request.session["access_key"],
+    #    aws_secret_access_key=request.session["secret_key"]
+    # )
 
     client_s3 = boto3.client(
         's3',
@@ -127,13 +129,15 @@ def add_iam_user(request):
         if request.POST.get("username"):
             client.create_user(Path="/", UserName=request.POST.get("username"))
             if request.POST.get("generate_keys"):
-                response = client.create_access_key(UserName=request.POST.get("username"))
+                pass
+                # to be implemented
+                # response = client.create_access_key(UserName=request.POST.get("username"))
             data = {"error": False}
         else:
             data = {"error": True, "response": "Please enter IAM username"}
         return HttpResponse(json.dumps(data))
     return render(request, "iam_user/add_iam_user.html", {"response_inst": response_inst["Reservations"],
-                           "response_buckets": response_buckets["Buckets"]})
+                  "response_buckets": response_buckets["Buckets"]})
 
 
 '''
@@ -188,28 +192,31 @@ def iam_user_detail(request, user_name):
     )
 
     return render(request, "iam_user/iam_user_detail.html", {"response": response["User"],
-                           "user_policies": user_policies["AttachedPolicies"],
-                           "user_name": user_name, "user_access_keys": user_access_keys["AccessKeyMetadata"]
-                           })
+                  "user_policies": user_policies["AttachedPolicies"],
+                  "user_name": user_name, "user_access_keys": user_access_keys["AccessKeyMetadata"]})
 
 
 def iam_user_change_password(request, user_name):
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+
+    # Usage of client vaiable will be implemented later.
+    # client = boto3.client(
+    #    'iam',
+    #    aws_access_key_id=request.session["access_key"],
+    #    aws_secret_access_key=request.session["secret_key"]
+    # )
     if request.method == 'POST':
         if request.POST.get("new_pwd") and request.POST.get("confirm_pwd"):
             if request.POST.get("new_pwd") != request.POST.get("confirm_pwd"):
                 data = {"error": True, 'response': "Confirm Password should match with Password."}
                 return HttpResponse(json.dumps(data))
             elif request.POST.get("new_pwd") == request.POST.get("confirm_pwd"):
-                response = client.create_login_profile(
-                    UserName=user_name,
-                    Password=request.POST.get("new_pwd"),
-                    PasswordResetRequired=False
-                )
+
+                # to be implemented later with response
+                # response = client.create_login_profile(
+                #     UserName=user_name,
+                #     Password=request.POST.get("new_pwd"),
+                #     PasswordResetRequired=False
+                # )
                 data = {"error": False}
                 return HttpResponse(json.dumps(data))
         else:
@@ -231,22 +238,27 @@ def policies_list(request, user_name):
             )
     if request.method == "POST":
         for policy in request.POST.getlist("policy"):
-            attach_policy_to_user = client.attach_user_policy(
-                UserName=user_name,
-                PolicyArn=policy
-            )
+            pass
+            # attach_policy_to_user is unused variable.
+            # attach_policy_to_user = client.attach_user_policy(
+            #     UserName=user_name,
+            #     PolicyArn=policy
+            # )
         return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
     return render(request, "policies.html", {"response": response["Policies"], "user_name": user_name})
 
 
 def detach_user_policies(request, user_name):
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
-    response = client.detach_user_policy(
-        UserName=user_name,
-        PolicyArn=request.GET.get("policy_arn")
-    )
+
+    # usage of response will be implemented later.
+    # client = boto3.client(
+    #    'iam',
+    #    aws_access_key_id=request.session["access_key"],
+    #    aws_secret_access_key=request.session["secret_key"]
+    # )
+
+    # response = client.detach_user_policy(
+    #     UserName=user_name,
+    #     PolicyArn=request.GET.get("policy_arn")
+    # )
     return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))

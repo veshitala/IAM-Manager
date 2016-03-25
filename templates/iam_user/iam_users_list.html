@@ -18,7 +18,6 @@
 								<th>ID</th>
 								<th>UserName</th>
 								<th>Created Date</th>
-								<th>Access Key</th>
 								<th>Details</th>
 							</tr>
 						</thead>
@@ -28,7 +27,6 @@
 								<td>{{ user.UserId}}</td>
 								<td>{{ user.UserName}}</td>
 								<td>{{ user.CreateDate}}</td>
-								<td>{% with user.UserName|get_iam_user as iam_user %}{{ iam_user.0.access_key }}{% endwith %}</td>
 								<td class="actions" align="center"><a href="{% url 'iam_user_detail' user.UserName %}"><i class="fa fa-eye"></i></a></td>
 								</tr>
 						{% endfor %}

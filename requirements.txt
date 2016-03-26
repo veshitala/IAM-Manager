@@ -2,11 +2,15 @@ Django==1.9.4
 boto3==1.3.0
 botocore==1.4.6
 dj-database-url==0.4.0
+dj-static==0.0.6
 django-appconf==1.0.1
 django-compressor==2.0
+django-toolbelt==0.0.1
 docutils==0.12
 gunicorn==19.4.5
 jmespath==0.9.0
+psycopg2==2.6.1
 python-dateutil==2.5.1
 six==1.10.0
+static3==0.6.1
 whitenoise==3.0

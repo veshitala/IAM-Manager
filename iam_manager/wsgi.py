@@ -8,10 +8,11 @@ https://docs.djangoproject.com/en/1.7/howto/deployment/wsgi/
 """
 
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "iam_manager.settings")
 
 from django.core.wsgi import get_wsgi_application
 from whitenoise.django import DjangoWhiteNoise
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "iam_manager.settings")
 
 application = get_wsgi_application()
 application = DjangoWhiteNoise(application)

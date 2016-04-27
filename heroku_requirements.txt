@@ -1,0 +1,3 @@
+django-toolbelt==0.0.1
+gunicorn==19.4.5
+whitenoise==3.0

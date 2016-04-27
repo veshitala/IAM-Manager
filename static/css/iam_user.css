@@ -84,6 +84,9 @@ form.go-right input:focus + label, form.go-right textarea:focus + label {
   font-size: 13px;
   border-radius: 0;
 }
+.error{
+  color:red;
+}
 
 
 /* add IAM User */

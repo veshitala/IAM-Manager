@@ -128,7 +128,7 @@ def add_iam_user(request):
                 client.create_access_key(UserName=request.POST.get("username"))
             data = {"error": False}
         else:
-            data = {"error": True, "response": "Please enter IAM username"}
+            data = {"error": True, "response": "Please enter IAM User Name"}
         return HttpResponse(json.dumps(data))
     # return render(request, "iam_user/add_iam_user.html", {"response_inst": response_inst["Reservations"],
     #               "response_buckets": response_buckets["Buckets"]})

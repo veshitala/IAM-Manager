@@ -40,7 +40,6 @@
                   <div class="form-group">
                     <input type="text" name="secret_key" id="secret_key" tabindex="2" class="form-control" placeholder="Secret Key">
                   </div>
-                  <p id="error"></p>
                   <div class="form-group">
                     <div class="row">
                       <div class="col-sm-6 col-sm-offset-3">
@@ -66,7 +65,7 @@
         $.post('.', $('.loginform').serialize(), function(data) {
           if (data.error){
             $("p.error").remove();
-            $('#error').after('<p class="error">' + data.response + '</p>');
+            $('#secret_key').after('<p class="error">' + data.response + '</p>');
           }
           else{
             window.location = "{% url 'home' %}"

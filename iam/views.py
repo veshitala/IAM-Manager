@@ -123,10 +123,14 @@ def add_iam_user(request):
     #     )
     if request.method == "POST":
         if request.POST.get("username"):
-            client.create_user(Path="/", UserName=request.POST.get("username"))
-            if request.POST.get("generate_keys"):
-                client.create_access_key(UserName=request.POST.get("username"))
-            data = {"error": False}
+            try:
+                client.create_user(Path="/", UserName=request.POST.get("username"))
+                if request.POST.get("generate_keys"):
+                    client.create_access_key(UserName=request.POST.get("username"))
+                data = {"error": False}
+            except ClientError as e:
+                data = {"error": True, "response": "Please enter IAM User Name"}
+            return HttpResponse(json.dumps(data))
         else:
             data = {"error": True, "response": "Please enter IAM User Name"}
         return HttpResponse(json.dumps(data))

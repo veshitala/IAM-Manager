@@ -2,5 +2,7 @@
     "name": "IAM",
     "description": "Self-hosted IAM app",
     "repository": "https://github.com/MicroPyramid/IAM-Manager",
-    "logo": "http://i.imgur.com/eXTLHNN.png",
+    "scripts": {
+    "postdeploy": "python manage.py makemigrations && python manage.py migrate"
+  }
 }

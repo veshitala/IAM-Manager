@@ -7,7 +7,7 @@ urlpatterns = [
     url(r'^logout/$', user_logout, name="user_logout"),
 
 
-    url(r'^$', settings, name="settings"),
+    url(r'^$', login, name="login"),
 
     # IAM User
     url(r'^iam/user/add/$', add_iam_user, name="add_iam_user"),
@@ -17,6 +17,6 @@ urlpatterns = [
 
     # policies
     url(r'^policies/(?P<user_name>[a-zA-Z0-9_-]+)/$', policies_list, name="policies_list"),
-    url(r'^iam-userpolicy/datach/(?P<user_name>[a-zA-Z0-9_-]+)/$', detach_user_policies, name="detach_user_policies"),
+    url(r'^iam-userpolicy/detach/(?P<user_name>[a-zA-Z0-9_-]+)/$', detach_user_policies, name="detach_user_policies"),
 
 ]

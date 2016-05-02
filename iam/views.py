@@ -8,29 +8,26 @@ import boto3
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
 
-'''
-    Authored by:Swetha
-    Other Modules Involved:
-    Tasks Involved:Home
-    Description:when user hits the url "^home/$" this function is called
-    This function renders to base template,
-    After log in with thier Access keys and Secret Keys.
-    '''
-
 
 def home(request):
+    '''
+    Authored by:Swetha
+    Other Modules Involved:
+    Description:when user hits the url "^home/$" this function is called
+    This function renders to "base" template,
+    After log in with thier Access keys and Secret Keys.
+    '''
     return render(request, "base.html")
 
-'''
+
+def user_logout(request):
+    '''
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Logout
     Description:when user hits the url "^/logout$" this function is called, user gets logged out and redirected to login template.
     Here when user log out respective user access key, secret key, username will be removed from session.
     '''
-
-
-def user_logout(request):
     if 'access_key' in request.session:
         request.session['access_key'] = None
     if 'secret_key' in request.session:
@@ -41,17 +38,16 @@ def user_logout(request):
     return HttpResponseRedirect('/')
 
 
-'''
+def login(request):
+    '''
     Authored by:Swetha
     Other Modules Involved:
-    Tasks Involved:Settings
+    Tasks Involved:login
     Description:when user hits the url "^$" this function is called
-    First this function renders to settings template,
-    Here user log in by entering valid access key and secret keys, then these varibles are stored in django session for further use.
+    First this function renders to "login" template,
+    Here user login by entering valid access key and secret keys, then these varibles are stored in django session for further use.
     '''
 
-
-def settings(request):
     if request.method == "POST":
         client = boto3.client(
            'iam',
@@ -76,34 +72,34 @@ def settings(request):
         except ClientError as e:
             data = {"error": True, "response": str(e)}
             return HttpResponse(json.dumps(data))
+    if 'access_key' in request.session:
+        return HttpResponseRedirect(reverse("home"))
     return render(request, "login.html")
 
 
-'''
+def add_iam_user(request):
+    '''
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Add IAM User
     Description:when user hits the url "^iam/user/add/$" this function is called
-    First this function renders to add_iam_user template,
+    First this function renders to "add_iam_user" template,
     New IAM user can create only when User updated settings(Access key, secret Keys).
     Connecting to boto3 IAM client with AWS Access key and Secret Keys.
     when post data is requested, new IAM user is created, when user selects to generate access and
     secret keys then acess keys are generated and saved in our database.
     '''
-
-
-def add_iam_user(request):
     client = boto3.client(
        'iam',
        aws_access_key_id=request.session["access_key"],
        aws_secret_access_key=request.session["secret_key"]
     )
 
-    client_ec2 = boto3.client(
-       'ec2', region_name="us-west-2",
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+    # client_ec2 = boto3.client(
+    #    'ec2', region_name="us-west-2",
+    #    aws_access_key_id=request.session["access_key"],
+    #    aws_secret_access_key=request.session["secret_key"]
+    # )
 
     # incomplete code will be impleted later.
     # ec2 = boto3.resource(
@@ -113,44 +109,45 @@ def add_iam_user(request):
     #    aws_secret_access_key=request.session["secret_key"]
     # )
 
-    client_s3 = boto3.client(
-        's3',
-        aws_access_key_id=request.session["access_key"],
-        aws_secret_access_key=request.session["secret_key"])
+    # client_s3 = boto3.client(
+    #     's3',
+    #     aws_access_key_id=request.session["access_key"],
+    #     aws_secret_access_key=request.session["secret_key"])
 
-    response_buckets = client_s3.list_buckets()
+    # response_buckets = client_s3.list_buckets()
 
-    response_inst = client_ec2.describe_instances(
-            DryRun=False,
-            Filters=[],
-            MaxResults=6
-        )
+    # response_inst = client_ec2.describe_instances(
+    #         DryRun=False,
+    #         Filters=[],
+    #         MaxResults=6
+    #     )
     if request.method == "POST":
         if request.POST.get("username"):
-            client.create_user(Path="/", UserName=request.POST.get("username"))
-            if request.POST.get("generate_keys"):
-                pass
-                # to be implemented
-                # response = client.create_access_key(UserName=request.POST.get("username"))
-            data = {"error": False}
+            try:
+                client.create_user(Path="/", UserName=request.POST.get("username"))
+                if request.POST.get("generate_keys"):
+                    client.create_access_key(UserName=request.POST.get("username"))
+                data = {"error": False}
+            except ClientError as e:
+                data = {"error": True, "response": "Please enter IAM User Name"}
+            return HttpResponse(json.dumps(data))
         else:
-            data = {"error": True, "response": "Please enter IAM username"}
+            data = {"error": True, "response": "Please enter IAM User Name"}
         return HttpResponse(json.dumps(data))
-    return render(request, "iam_user/add_iam_user.html", {"response_inst": response_inst["Reservations"],
-                  "response_buckets": response_buckets["Buckets"]})
+    # return render(request, "iam_user/add_iam_user.html", {"response_inst": response_inst["Reservations"],
+    #               "response_buckets": response_buckets["Buckets"]})
+    return render(request, "iam_user/add_iam_user.html")
 
 
-'''
+def iam_users_list(request):
+    '''
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Add IAM User List
     Description:when user hits the url "^iam/user/list/$" this function is called
-    First this function renders to iam_users_list template,
+    First this function renders to "iam_users_list" template,
     Connecting to boto3 IAM client, Displays all IAM Users.
     '''
-
-
-def iam_users_list(request):
     client = boto3.client(
        'iam',
        aws_access_key_id=request.session["access_key"],
@@ -160,17 +157,15 @@ def iam_users_list(request):
     return render(request, "iam_user/iam_users_list.html", {"response": response["Users"]})
 
 
-'''
+def iam_user_detail(request, user_name):
+    '''
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Add IAM User Detail
     Description:when user hits the url "^iam/user/detail/$" this function is called
-    First this function renders to iam_users_list template,
+    First this function renders to "iam_users_list" template,
     Connecting to boto3 IAM client, Display details of specific IAM User.
     '''
-
-
-def iam_user_detail(request, user_name):
     client = boto3.client(
        'iam',
        aws_access_key_id=request.session["access_key"],
@@ -197,13 +192,19 @@ def iam_user_detail(request, user_name):
 
 
 def iam_user_change_password(request, user_name):
-
-    # Usage of client vaiable will be implemented later.
-    # client = boto3.client(
-    #    'iam',
-    #    aws_access_key_id=request.session["access_key"],
-    #    aws_secret_access_key=request.session["secret_key"]
-    # )
+    '''
+    Authored by:Swetha
+    Other Modules Involved:
+    Tasks Involved:Change password of IAM User
+    Description:when user hits the url "^iam/user/change-password/username/$" this function is called
+    First this function renders to "change_password" template,
+    Connecting to boto3 IAM client, Checks whether the new password and confirm password matches, if not raises an error if not save the data.
+    '''
+    client = boto3.client(
+       'iam',
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
+    )
     if request.method == 'POST':
         if request.POST.get("new_pwd") and request.POST.get("confirm_pwd"):
             if request.POST.get("new_pwd") != request.POST.get("confirm_pwd"):
@@ -211,12 +212,11 @@ def iam_user_change_password(request, user_name):
                 return HttpResponse(json.dumps(data))
             elif request.POST.get("new_pwd") == request.POST.get("confirm_pwd"):
 
-                # to be implemented later with response
-                # response = client.create_login_profile(
-                #     UserName=user_name,
-                #     Password=request.POST.get("new_pwd"),
-                #     PasswordResetRequired=False
-                # )
+                client.create_login_profile(
+                    UserName=user_name,
+                    Password=request.POST.get("new_pwd"),
+                    PasswordResetRequired=False
+                )
                 data = {"error": False}
                 return HttpResponse(json.dumps(data))
         else:
@@ -226,6 +226,14 @@ def iam_user_change_password(request, user_name):
 
 
 def policies_list(request, user_name):
+    '''
+    Authored by:Swetha
+    Other Modules Involved:
+    Tasks Involved:Policies list
+    Description:when user hits the url "^policies/username/$" this function is called
+    First this function renders to "policies" template,
+    Connecting to boto3 IAM client,when user can attach multiple policies.
+    '''
     client = boto3.client(
        'iam',
        aws_access_key_id=request.session["access_key"],
@@ -238,27 +246,31 @@ def policies_list(request, user_name):
             )
     if request.method == "POST":
         for policy in request.POST.getlist("policy"):
-            pass
-            # attach_policy_to_user is unused variable.
-            # attach_policy_to_user = client.attach_user_policy(
-            #     UserName=user_name,
-            #     PolicyArn=policy
-            # )
+            client.attach_user_policy(
+                UserName=user_name,
+                PolicyArn=policy
+            )
         return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
     return render(request, "policies.html", {"response": response["Policies"], "user_name": user_name})
 
 
 def detach_user_policies(request, user_name):
+    '''
+    Authored by:Swetha
+    Other Modules Involved:
+    Tasks Involved:Policy detach
+    Description:when user hits the url "^iam-userpolicy/detach/username/$" this function is called
+    First this function renders to 'iam_user_detail' template,
+    Connecting to boto3 IAM client,detach policy for the particular user.
+    '''
+    client = boto3.client(
+       'iam',
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
+    )
 
-    # usage of response will be implemented later.
-    # client = boto3.client(
-    #    'iam',
-    #    aws_access_key_id=request.session["access_key"],
-    #    aws_secret_access_key=request.session["secret_key"]
-    # )
-
-    # response = client.detach_user_policy(
-    #     UserName=user_name,
-    #     PolicyArn=request.GET.get("policy_arn")
-    # )
+    client.detach_user_policy(
+        UserName=user_name,
+        PolicyArn=request.GET.get("policy_arn")
+    )
     return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))

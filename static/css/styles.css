@@ -304,3 +304,7 @@ body {
     color:white;
     text-decoration: none;
 }
+.policies{
+height: 450px;
+overflow-y: scroll;
+}

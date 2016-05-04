@@ -11,12 +11,13 @@
 			<input name="username" type="text" class="form-control">
 			<label for="name">UserName</label>
 		</div>
-
-		<div class="form-group" id="email">
-			<input name="email" type="email" class="form-control">
-			<label for="phone">Email</label>
-		</div>
-		<div class="form-group" id="password">
+    <div class="form-group checkbox checkbox_block text-left">
+      <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" id="iam_user_password"></div>
+      <div class="col-md-11 col-xs-11">
+      <span>Create Password for IAM User</span>
+      </div>
+    </div>
+		<div class="form-group iam_user_pwd" id="password" style="display:none;">
 			<input  name="password" type="password" class="form-control">
 			<label for="name">Password</label>
 		</div>
@@ -90,6 +91,14 @@
 </div>
 </body>
 <script type="text/javascript">
+$('#iam_user_password').change(function () {
+    if ($(this).is(":checked")) {
+      $(".iam_user_pwd").show()
+    }
+    else{
+      $(".iam_user_pwd").hide()
+    }
+});
       $(document).ready(function(){
       $('#add_iam_user_form').submit(function(e) {
         e.preventDefault();

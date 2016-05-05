@@ -12,6 +12,9 @@ form > div {
   position: relative;
   overflow: hidden;
 }
+form label{
+  display: block;
+}
 form input, form textarea {
   width: 100%;
   border: 2px solid gray;
@@ -29,21 +32,35 @@ form input:valid, form textarea:valid {
 form input:focus, form textarea:focus {
   border-color: #357EBD;
 }
-form input:focus + label, form textarea:focus + label {
+/*form input:focus + label, form textarea:focus + label {
   background: #357EBD;
   color: white;
   font-size: 70%;
   padding: 1px 6px;
   z-index: 2;
   text-transform: uppercase;
+}*/
+form .form-group{
+  position: relative;
 }
 form label {
-  /*-webkit-transition: background 0.2s, color 0.2s, top 0.2s, bottom 0.2s, right 0.2s, left 0.2s;*/
-  /*transition: background 0.2s, color 0.2s, top 0.2s, bottom 0.2s, right 0.2s, left 0.2s;*/
-  position: absolute;
-  color: #999;
-  padding: 7px 6px;
-  font-weight: normal;
+ /* -webkit-transition: background 0.2s, color 0.2s, top 0.2s, bottom 0.2s, right 0.2s, left 0.2s; */
+    /* transition: background 0.2s, color 0.2s, top 0.2s, bottom 0.2s, right 0.2s, left 0.2s; */
+    position: absolute;
+    color: #999;
+    padding: 15px 6px;
+    font-weight: normal;
+    right: 0;
+    margin-right: 0;
+    width: 35%;
+    padding-top: 12px;
+    background: #333;
+    color: #fff;
+    font-size: 13px;
+    border-radius: 0;
+    top: 0;
+    z-index: 99999;
+;
 }
 form textarea {
   display: block;
@@ -64,25 +81,6 @@ form.go-bottom input:focus, form.go-bottom textarea:focus {
 form.go-bottom input:focus + label, form.go-bottom textarea:focus + label {
   top: 100%;
   margin-top: -16px;
-}
-form.go-right label {
-  border-radius: 0 5px 5px 0;
-  height: 100%;
-  top: 0;
-  right: 100%;
-  width: 100%;
-  margin-right: -100%;
-
-}
-form.go-right input:focus + label, form.go-right textarea:focus + label {
-  right: 0;
-  margin-right: 0;
-  width: 35%;
-  padding-top: 12px;
-  background: #333;
-  color:#fff;
-  font-size: 13px;
-  border-radius: 0;
 }
 .error{
   color:red;

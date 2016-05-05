@@ -5,6 +5,7 @@ from iam.models import *
 from iam.forms import *
 import json
 import boto3
+import csv
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
 
@@ -124,12 +125,16 @@ def add_iam_user(request):
     if request.method == "POST":
         if request.POST.get("username"):
             try:
-                client.create_user(Path="/", UserName=request.POST.get("username"))
+                response_without_keys = client.create_user(Path="/", UserName=request.POST.get("username"))
                 if request.POST.get("generate_keys"):
-                    client.create_access_key(UserName=request.POST.get("username"))
-                data = {"error": False}
+                    response = client.create_access_key(UserName=request.POST.get("username"))
+                    data = {"error": False, "iam_username": response["AccessKey"]["UserName"], "iam_access_key": response["AccessKey"]["AccessKeyId"], "iam_secret_key": response["AccessKey"]["SecretAccessKey"]}
+                else:
+                    data = {"error": False, "iam_username": response_without_keys["User"]["UserName"]}
+                return HttpResponse(json.dumps(data))
             except ClientError as e:
-                data = {"error": True, "response": "Please enter IAM User Name"}
+                print (ClientError)
+                data = {"error": True, "response": str(e)}
             return HttpResponse(json.dumps(data))
         else:
             data = {"error": True, "response": "Please enter IAM User Name"}
@@ -137,6 +142,16 @@ def add_iam_user(request):
     # return render(request, "iam_user/add_iam_user.html", {"response_inst": response_inst["Reservations"],
     #               "response_buckets": response_buckets["Buckets"]})
     return render(request, "iam_user/add_iam_user.html")
+
+
+def iam_user_details_download(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="Credentials.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["UserName", "AccessKey", "SecretKey"])
+
+    writer.writerow([request.POST.get("download_username"), request.POST.get("download_access_key"), request.POST.get("download_secret_key")])
+    return response
 
 
 def iam_users_list(request):

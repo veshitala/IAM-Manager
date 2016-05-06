@@ -94,7 +94,6 @@
           <label for="name">UserName</label>
         </div>
         <div class="form-group">
-        <input id="downloded_credentials" value="" type="hidden">
           <input name="download_access_key" id="download_access_key" type="text" class="form-control" value="">
           <label for="name">Access Key</label>
         </div>
@@ -113,9 +112,10 @@
   </div>
 </div>
 <script type="text/javascript">
-  $(".next_button").click(function(e){  
+  is_downloaded = false
+  $(".next_button").click(function(e){
     e.preventDefault();
-    if ($("#downloded_credentials").val()){
+    if (is_downloaded){
       window.location = "{% url 'iam_users_list' %}";
     }
     else{
@@ -137,7 +137,6 @@
   });
   $(".download_credentials").click(function(e){
     is_downloaded = true
-    $("#downloded_credentials").val(is_downloaded)
     $("#download_iam_users").submit();
   })
         $('#add_iam_user_form').submit(function(e) {

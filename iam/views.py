@@ -122,7 +122,6 @@ def add_iam_user(request):
     #         Filters=[],
     #         MaxResults=6
     #     )
-    is_downloaded = False
     if request.method == "POST":
         if request.POST.get("username"):
             try:
@@ -164,7 +163,7 @@ def add_iam_user(request):
         else:
             data = {"error": True, "response": "Please enter IAM User Name"}
         return HttpResponse(json.dumps(data))
-    return render(request, "iam_user/add_iam_user.html", {"is_downloaded": is_downloaded})
+    return render(request, "iam_user/add_iam_user.html")
 
 
 def iam_user_details_download(request):

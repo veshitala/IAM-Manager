@@ -12,7 +12,7 @@
           <label for="name">UserName</label>
         </div>
         <div class="form-group checkbox checkbox_block text-left">
-          <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" id="iam_user_password"></div>
+          <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" name="iam_user_password" id="iam_user_password"></div>
           <div class="col-md-11 col-xs-11">
             <span>Create Password for IAM User</span>
           </div>
@@ -86,7 +86,7 @@
       </form>
     </div>
     <div class="col-md-offset-3 col-md-6 col-ms-offset-3 col-sm-offset-2 col-sm-8 col-sm-offset-2 col-xs-12 gradient_panel download_iam_user_details" style="display:none;">
-      <form role="form" class="col-md-12 go-right" id="download_iam_users" method="post">
+      <form role="form" class="col-md-12 go-right" action="{% url "iam_user_details_download" %}" id="download_iam_users" method="post">
         {% csrf_token %}
         <h2 class="title">IAM User</h2>
         <div class="form-group">
@@ -103,8 +103,8 @@
         </div>
         <p id="error"></p>
         <div class="row btn_row">
-          <div class="col-xs-6 col-md-6"><button class="btn btn-success btn-block btn-lg" type="submit">Download</button></div>
-          <div class="col-xs-6 col-md-6"><button class="btn btn-success btn-block btn-lg">Next</button></div>
+          <div class="col-xs-6 col-md-6"><button class="btn btn-success btn-block btn-lg download_credentials">Download</button></div>
+          <div class="col-xs-6 col-md-6"><button class="btn btn-success btn-block btn-lg next_button">Next</button></div>
 
         </div>
       </form>
@@ -112,11 +112,10 @@
   </div>
 </div>
 <script type="text/javascript">
-  $(".next_btn").click(function(e){
+  $(".next_button").click(function(e){
     e.preventDefault();
-  $(".iam_user_div").hide()
-  $(".download_iam_user_details").show()
-  
+  window.location = "{% url 'iam_users_list' %}";
+
   })
   $('#iam_user_password').change(function () {
       if ($(this).is(":checked")) {
@@ -149,12 +148,6 @@
             }
           },"json");
         });
-        $('#download_iam_users').submit(function(e) {
-          e.preventDefault();
-          $.post('{% url "iam_user_details_download" %}', $('#download_iam_users').serialize(), function(data) {
-          },"json");
-        });
-
         $(".ec2_checkbox").change(function(e){
           e.preventDefault();
           if ($(".ec2_checkbox").val() == "ec2"){

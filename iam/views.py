@@ -125,7 +125,32 @@ def add_iam_user(request):
     if request.method == "POST":
         if request.POST.get("username"):
             try:
-                response_without_keys = client.create_user(Path="/", UserName=request.POST.get("username"))
+                if request.POST.get("iam_user_password"):
+                    if request.POST.get("password"):
+                        try:
+                            try:
+                                response_without_keys = client.create_user(Path="/", UserName=request.POST.get("username"))
+                            except ClientError as e:
+                                data = {"error": True, "response": str(e)}
+                                return HttpResponse(json.dumps(data))
+                            client.create_login_profile(
+                                UserName=response_without_keys["User"]["UserName"],
+                                Password=request.POST.get("password"),
+                                PasswordResetRequired=False
+                            )
+                        except ClientError as e:
+                            data = {"error": True, "response": "Password Should contain atleast one UpperCase letter, LowerCase letter and Numbers."}
+                            return HttpResponse(json.dumps(data))
+                    else:
+                        data = {"error": True, "response": "Please Enter Password"}
+                        return HttpResponse(json.dumps(data))
+                else:
+                    try:
+                        response_without_keys = client.create_user(Path="/", UserName=request.POST.get("username"))
+                    except ClientError as e:
+                        data = {"error": True, "response": str(e)}
+                        return HttpResponse(json.dumps(data))
+
                 if request.POST.get("generate_keys"):
                     response = client.create_access_key(UserName=request.POST.get("username"))
                     data = {"error": False, "iam_username": response["AccessKey"]["UserName"], "iam_access_key": response["AccessKey"]["AccessKeyId"], "iam_secret_key": response["AccessKey"]["SecretAccessKey"]}
@@ -133,18 +158,21 @@ def add_iam_user(request):
                     data = {"error": False, "iam_username": response_without_keys["User"]["UserName"]}
                 return HttpResponse(json.dumps(data))
             except ClientError as e:
-                print (ClientError)
                 data = {"error": True, "response": str(e)}
             return HttpResponse(json.dumps(data))
         else:
             data = {"error": True, "response": "Please enter IAM User Name"}
         return HttpResponse(json.dumps(data))
-    # return render(request, "iam_user/add_iam_user.html", {"response_inst": response_inst["Reservations"],
-    #               "response_buckets": response_buckets["Buckets"]})
     return render(request, "iam_user/add_iam_user.html")
 
 
 def iam_user_details_download(request):
+    '''
+    Authored by:Swetha
+    Other Modules Involved:
+    Tasks Involved:Download Access Credentials
+    Description:This function generates CSV file download with username, Access Keys, Secret Keys.
+    '''
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="Credentials.csv"'
     writer = csv.writer(response)

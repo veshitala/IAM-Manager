@@ -5,6 +5,7 @@ from iam.models import *
 from iam.forms import *
 import json
 import boto3
+import csv
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
 
@@ -56,13 +57,13 @@ def login(request):
         )
         try:
             if request.POST.get("access_key") and request.POST.get("secret_key") and request.POST.get("username"):
+                client.get_login_profile(UserName=request.POST.get("username"))
                 if 'access_key' not in request.session:
                     request.session['access_key'] = request.POST.get("access_key")
                 if 'secret_key' not in request.session:
                     request.session['secret_key'] = request.POST.get("secret_key")
                 if 'client_username' not in request.session:
                     request.session['client_username'] = request.POST.get("username")
-                client.get_user(UserName=request.POST.get("username"))
 
                 data = {"error": False}
             else:
@@ -70,7 +71,7 @@ def login(request):
             return HttpResponse(json.dumps(data))
 
         except ClientError as e:
-            data = {"error": True, "response": str(e)}
+            data = {"error": True, "response": "Credentials are not valid."}
             return HttpResponse(json.dumps(data))
     if 'access_key' in request.session:
         return HttpResponseRedirect(reverse("home"))
@@ -124,12 +125,16 @@ def add_iam_user(request):
     if request.method == "POST":
         if request.POST.get("username"):
             try:
-                client.create_user(Path="/", UserName=request.POST.get("username"))
+                response_without_keys = client.create_user(Path="/", UserName=request.POST.get("username"))
                 if request.POST.get("generate_keys"):
-                    client.create_access_key(UserName=request.POST.get("username"))
-                data = {"error": False}
+                    response = client.create_access_key(UserName=request.POST.get("username"))
+                    data = {"error": False, "iam_username": response["AccessKey"]["UserName"], "iam_access_key": response["AccessKey"]["AccessKeyId"], "iam_secret_key": response["AccessKey"]["SecretAccessKey"]}
+                else:
+                    data = {"error": False, "iam_username": response_without_keys["User"]["UserName"]}
+                return HttpResponse(json.dumps(data))
             except ClientError as e:
-                data = {"error": True, "response": "Please enter IAM User Name"}
+                print (ClientError)
+                data = {"error": True, "response": str(e)}
             return HttpResponse(json.dumps(data))
         else:
             data = {"error": True, "response": "Please enter IAM User Name"}
@@ -137,6 +142,16 @@ def add_iam_user(request):
     # return render(request, "iam_user/add_iam_user.html", {"response_inst": response_inst["Reservations"],
     #               "response_buckets": response_buckets["Buckets"]})
     return render(request, "iam_user/add_iam_user.html")
+
+
+def iam_user_details_download(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="Credentials.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["UserName", "AccessKey", "SecretKey"])
+
+    writer.writerow([request.POST.get("download_username"), request.POST.get("download_access_key"), request.POST.get("download_secret_key")])
+    return response
 
 
 def iam_users_list(request):
@@ -211,14 +226,17 @@ def iam_user_change_password(request, user_name):
                 data = {"error": True, 'response': "Confirm Password should match with Password."}
                 return HttpResponse(json.dumps(data))
             elif request.POST.get("new_pwd") == request.POST.get("confirm_pwd"):
-
-                client.create_login_profile(
-                    UserName=user_name,
-                    Password=request.POST.get("new_pwd"),
-                    PasswordResetRequired=False
-                )
-                data = {"error": False}
-                return HttpResponse(json.dumps(data))
+                try:
+                    client.create_login_profile(
+                        UserName=user_name,
+                        Password=request.POST.get("new_pwd"),
+                        PasswordResetRequired=False
+                    )
+                    data = {"error": False}
+                    return HttpResponse(json.dumps(data))
+                except ClientError as e:
+                    data = {"error": True, "response": "Password Should contain atleast one UpperCase letter, LowerCase letter and Numbers."}
+                    return HttpResponse(json.dumps(data))
         else:
             data = {'error': True, 'response': "Please enter new password and confirm password."}
             return HttpResponse(json.dumps(data))
@@ -241,8 +259,7 @@ def policies_list(request, user_name):
     )
     response = client.list_policies(
             Scope='All',
-            OnlyAttached=False,
-            MaxItems=10
+            OnlyAttached=False
             )
     if request.method == "POST":
         for policy in request.POST.getlist("policy"):

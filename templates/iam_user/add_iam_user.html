@@ -112,10 +112,20 @@
   </div>
 </div>
 <script type="text/javascript">
+  is_downloaded = false
   $(".next_button").click(function(e){
     e.preventDefault();
-  window.location = "{% url 'iam_users_list' %}";
-
+    if (is_downloaded){
+      window.location = "{% url 'iam_users_list' %}";
+    }
+    else{
+      if(confirm("You want to Continue without downloading ?")){
+         window.location = "{% url 'iam_users_list' %}";
+        }
+      else{
+          return
+        }
+    }
   })
   $('#iam_user_password').change(function () {
       if ($(this).is(":checked")) {
@@ -125,6 +135,10 @@
         $(".iam_user_pwd").hide()
       }
   });
+  $(".download_credentials").click(function(e){
+    is_downloaded = true
+    $("#download_iam_users").submit();
+  })
         $('#add_iam_user_form').submit(function(e) {
           e.preventDefault();
           $.post('{% url "add_iam_user" %}', $('#add_iam_user_form').serialize(), function(data) {

@@ -19,5 +19,6 @@ urlpatterns = [
     # policies
     url(r'^policies/(?P<user_name>[a-zA-Z0-9_-]+)/$', policies_list, name="policies_list"),
     url(r'^iam-userpolicy/detach/(?P<user_name>[a-zA-Z0-9_-]+)/$', detach_user_policies, name="detach_user_policies"),
+    url(r'^iam/custom-policy/(?P<user_name>[a-zA-Z0-9_-]+)/$', generate_custom_policy, name="generate_custom_policy"),
 
 ]

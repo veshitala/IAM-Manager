@@ -4,7 +4,7 @@
 <div class="container_block iam_user_list mar_auto">
 	<div class="row form_row" >
 		<div class="col-md-12 users_list">
-			<div class="panel panel-primary">
+			<div class="panel panel-primary policies_panel">
 				<div class="panel-heading">Policies List</h3>
 				</div>
 					<form action="{% url 'policies_list' user_name  %}" method="post">{% csrf_token %}
@@ -32,12 +32,21 @@
 				</table>
 			</div>
 			<div class="row btn_row">
-				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success btn-block btn-lg" type="submit">Attach Policy</button></div>
+				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success" type="submit">Attach Policy</button></div>
 			</div>
 			</form>
+			<button class="custom_policy btn btn-success">Custom Policy</button>
+
+			<!--<div class="row btn_row">
+				<div class="col-xs-6 col-md-2 pull-right"><button class="custom_policy btn btn-success btn-block btn-lg">Custom Policy</button></div>
+			</div>-->
 		</div>
 	</div>
 </div>
 
-
+<script type="text/javascript">
+	$(".custom_policy").click(function(e){
+		window.location = "{% url 'generate_custom_policy' user_name  %}"
+	})
+</script>
 {% endblock %}

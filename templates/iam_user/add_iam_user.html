@@ -40,45 +40,7 @@
           <div class="col-md-11 col-xs-11">
           <span>RDS</span>
           </div>
-          </div>
-          
-          <div class="form-group checkbox checkbox_block text-left">
-          <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" name="s3" class="s3_checkbox" value="s3"></div>
-          <div class="col-md-11 col-xs-11">
-          <span>S3</span>
-          </div>
           </div>-->
-        <div class="form-group policy" id="policy_name" style="display:none;">
-          <input type="text" name="policy_name" class="form-control">
-          <label for="name">Policy Name</label>
-        </div>
-        <div class="form-group" id="ec2_div" style="display:none;">
-          <select name="ec2_instances" class="form-control">
-            <option>Please select option</option>
-            {% for instance in response_inst %}
-            {% for i in instance.Instances %}
-            <option value="{{ i.KeyName }}">{{ i.KeyName }}</option>
-            {% endfor %}
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group" id="s3_div" style="display:none;">
-          <select name="s3_buckets" class="form-control">
-            <option>Please select option</option>
-            {% for bucket in response_buckets %}
-            <option>{{ bucket.Name }}</option>
-            {% endfor %}
-            <label for="name">S3 buckets</label>
-          </select>
-        </div>
-        <div class="form-group" id="rds_div" style="display:none;">
-          <select name="rds" class="form-control">
-            {% for instance in response_inst %}
-            <option>Please select option</option>
-            {% endfor %}
-            <label for="name">RDS</label>
-          </select>
-        </div>
         <p id="error"></p>
         <div class="row btn_row">
           <div class="col-xs-6 col-md-6"><button class="btn btn-success btn-block btn-lg add_iam_user" type="submit">Create</button></div>

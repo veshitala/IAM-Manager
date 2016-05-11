@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block base %}
+<div class="container_block settings">
+  <div class="row form_row">
+    <div class="col-md-offset-3 col-md-6 col-ms-offset-3 col-sm-offset-2 col-sm-8 col-sm-offset-2 col-xs-12 gradient_panel download_iam_user_details">
+      <form role="form" id="custom_policy_form" class="col-md-12 go-right" method="post">
+        {% csrf_token %}
+        <h2 class="title">Policy Generator</h2>
+        
+        <div class="form-group">
+                    <input type="text" id="policy_name" name="policy_name" tabindex="1" class="form-control" placeholder="Policy Name">
+                  </div>
+         <div class="form-group">
+          <select name="amazon_s3_service" class="form-control" id="amazon_s3_service">
+            <option value="">Please select Amazon Service</option>
+            <option value="s3">s3</option>
+            <label for="name">Amazon Service</label>
+          </select>
+        </div>
+        <div class="form-group s3_div">
+          <select class="form-control" name="bucket_name" id="bucket_name">
+            <option value="">Please select S3 Bucket</option>
+            {% for bucket in response_buckets %}
+            <option value="{{ bucket.Name }}">{{ bucket.Name }}</option>
+            {% endfor %}
+            <label for="name">S3 buckets</label>
+          </select>
+        </div>
+        <div class="form-group s3_div">
+          <select class="form-control" name="action" id="action">
+            <option value="">Please select action</option>
+            <option value="CreateBucket">Create Bucket</option>
+            <option value="DeleteBucket">Delete Bucket</option>
+            <option value="GetObject">Get Object</option>
+            <option value="ListBucket">List Bucket</option>
+            <option value="DeleteObject">Delete Object</option>
+          </select>
+        </div>
+        <p id="exception_error"></p>
+        <div class="row btn_row">
+          <div class="col-xs-6 col-md-6"><button class="btn btn-success btn-block btn-lg download_credentials">Generate</button></div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  $("#custom_policy_form").submit(function(event) {
+    event.preventDefault();
+    $.post('{% url "generate_custom_policy" user_name %}', $("#custom_policy_form").serialize(), function(data) {
+      if(data.error){
+        $('p.failure').remove();
+        for (var key in data.response){
+          $('#'+key).after('<p class="failure">'+data.response[key]+'</p>');
+        }
+        if(data.exception_error){
+          $('#exception_error').after('<p class="failure">'+data.exception_error+'</p>');
+        }
+      }else{
+        window.location = ".";
+      }
+    }, 'json');
+  });
+</script>
+{% endblock %}

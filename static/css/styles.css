@@ -308,3 +308,16 @@ body {
 height: 450px;
 overflow-y: scroll;
 }
+.policies_panel{
+    position: relative;
+}
+.policies_panel .custom_policy{
+    position: absolute;
+    bottom: 20px;
+    display: inline-block;
+    border-radius: 0;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 6px 20px;
+    right: 175px;
+}

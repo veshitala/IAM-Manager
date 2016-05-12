@@ -29,7 +29,6 @@
         </div>
         <div class="form-group s3_div">
           <select class="form-control js-example-basic-multiple" multiple="multiple" name="action" id="action">
-            <option value="">Please select action</option>
             <option value="CreateBucket">Create Bucket</option>
             <option value="DeleteBucket">Delete Bucket</option>
             <option value="GetObject">Get Object</option>
@@ -64,8 +63,7 @@
       }
     }, 'json');
   });
-</script>
-<script type="text/javascript">
+
   $(".js-example-basic-multiple").select2();
 </script>
 {% endblock %}

@@ -3,6 +3,6 @@
 
 
 
-<a href="http://heroku.com/deploy?template=http://github.com/MicroPyramid/IAM-Manager">
-  <img src="http://www.herokucdn.com/deploy/button.svg" alt="Deploy">
+<a href="https://heroku.com/deploy?template=https://github.com/MicroPyramid/IAM-Manager">
+  <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy">
 </a>

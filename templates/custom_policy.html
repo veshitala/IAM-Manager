@@ -7,35 +7,39 @@
       <form role="form" id="custom_policy_form" class="col-md-12 go-right" method="post">
         {% csrf_token %}
         <h2 class="title">Policy Generator</h2>
-        
         <div class="form-group">
-                    <input type="text" id="policy_name" name="policy_name" tabindex="1" class="form-control" placeholder="Policy Name">
-                  </div>
+            <input type="text" id="policy_name" name="policy_name" tabindex="1" class="form-control" placeholder="Policy Name">
+            <label for="name">Policy Name</label>
+          </div>
          <div class="form-group">
+          <label for="name">Amazon Service</label>
           <select name="amazon_s3_service" class="form-control" id="amazon_s3_service">
-            <option value="">Please select Amazon Service</option>
+            <option value="">Please select option</option>
             <option value="s3">s3</option>
-            <label for="name">Amazon Service</label>
           </select>
         </div>
         <div class="form-group s3_div">
+          <label for="name">S3 buckets</label>
           <select class="form-control" name="bucket_name" id="bucket_name">
-            <option value="">Please select S3 Bucket</option>
+            <option value="">Please select option</option>
             {% for bucket in response_buckets %}
             <option value="{{ bucket.Name }}">{{ bucket.Name }}</option>
             {% endfor %}
-            <label for="name">S3 buckets</label>
           </select>
         </div>
-        <div class="form-group s3_div">
-          <select class="form-control" name="action" id="action">
-            <option value="">Please select action</option>
+        <div class="form-group select2_panel" id="action">
+          <div class="select2_block">
+             <select class="form-control js-example-basic-multiple" multiple="multiple" name="action">
             <option value="CreateBucket">Create Bucket</option>
             <option value="DeleteBucket">Delete Bucket</option>
             <option value="GetObject">Get Object</option>
             <option value="ListBucket">List Bucket</option>
             <option value="DeleteObject">Delete Object</option>
           </select>
+          </div>
+          <div class="select2_label">
+            Actions
+          </div>
         </div>
         <p id="exception_error"></p>
         <div class="row btn_row">
@@ -46,6 +50,7 @@
     </div>
   </div>
 </div>
+<script type="text/javascript" src="https://select2.github.io/dist/js/select2.full.js"></script>
 <script type="text/javascript">
   $("#custom_policy_form").submit(function(event) {
     event.preventDefault();
@@ -63,5 +68,7 @@
       }
     }, 'json');
   });
+
+  $(".js-example-basic-multiple").select2();
 </script>
 {% endblock %}

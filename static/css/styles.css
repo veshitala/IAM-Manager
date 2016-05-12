@@ -321,3 +321,34 @@ overflow-y: scroll;
     padding: 6px 20px;
     right: 175px;
 }
+.select2_panel{
+    display: table;
+    width: 100%;
+    background: white;
+}
+.select2_panel .select2_block{
+    display: table-cell;
+}
+.select2_panel .select2_label{
+    display: table-cell;
+    width:150px;
+    padding: 15px 6px;
+    font-weight: normal;
+    right: 0;
+    margin-right: 0;
+    width: 35%;
+    padding-top: 12px;
+    background: #333;
+    color: #fff;
+    font-size: 13px;
+    border-radius: 0;
+}
+.select2_panel .select2-container--default .select2-selection--multiple{
+    border:none;
+}
+.select2_panel .select2-container--default.select2-container--focus .select2-selection--multiple{
+    border-radius:0;
+    min-height: 45px;
+    border:none;
+    box-shadow: none;
+}

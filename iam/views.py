@@ -167,8 +167,18 @@ def generate_custom_policy(request, user_name):
         if create_policy_form.is_valid():
             if request.POST.get("amazon_s3_service") == "s3":
                 bucket_name = str(request.POST.get("bucket_name"))
-                action = str(request.POST.get("action"))
-                policy_document = '{"Version": "2012-10-17","Statement": [{"Sid": "","Effect": "Allow","Action": ["s3:'+action+'"],"Resource": ["arn:aws:s3:::'+bucket_name+'"]}]}'
+                action = ""
+                print (request.POST.getlist("action"))
+                if len(request.POST.getlist("action")) == 1:
+                    action += 's3:'+a
+                else:
+                    for index, a in enumerate(request.POST.getlist("action")):
+                        action += "s3:"+str(a)+""
+                        if not index == len(request.POST.getlist("action"))-1:
+                            action += ','
+                print (action)
+                policy_document = '{"Version": "2012-10-17","Statement": [{"Sid": "","Effect": "Allow","Action": ['+action+'],"Resource": ["arn:aws:s3:::'+bucket_name+'"]}]}'
+                print (policy_document)
                 try:
                     policy = client.create_policy(
                         PolicyName=request.POST.get("policy_name"),

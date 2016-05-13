@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block base %}
+<div class="container_block iam_user_list mar_auto">
+	<div class="row form_row" >
+		<div class="col-md-12 users_list">
+			<div class="panel panel-primary policies_panel">
+				<div class="panel-heading">Simple Email Service</h3>
+				</div>
+					<form action="/ses/send-email/us-west-2/" method="post">{% csrf_token %}
+
+			<div class="table-responsive policies">
+                <input type='hidden' name='region_name'/> 
+                From: <select name='source'>
+                    {% for verified_email_address in verified_email_addresses %}
+                    <option value='{{ verified_email_address }}'>{{ verified_email_address }}</option>
+                    {% endfor %}
+                </select>
+                To: <select name='destinations'>
+                    {% for verified_email_address in verified_email_addresses %}
+                    <option value='{{ verified_email_address }}'>{{ verified_email_address }}</option>
+                    {% endfor %}
+                </select>
+                <br/>Subject: <input name='subject' type='text'/>
+                <br/>body: <input name='body' type='textarea'/>
+			</div>
+			<div class="row btn_row">
+				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success" type="submit">Send</button></div>
+			</div>
+			</form>
+		</div>
+	</div>
+</div>
+{% endblock %}

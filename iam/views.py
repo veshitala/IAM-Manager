@@ -344,3 +344,25 @@ def detach_user_policies(request, user_name):
         PolicyArn=request.GET.get("policy_arn")
     )
     return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
+
+
+def send_email(request, region_name=None):
+    session = boto3.Session(aws_access_key_id=request.session["access_key"], aws_secret_access_key=request.session["secret_key"])
+    ses_client = session.client('ses', region_name=region_name)
+
+    if request.method == 'GET':
+        verified_email_addresses = ses_client.list_verified_email_addresses()['VerifiedEmailAddresses']
+        return render(request, 'ses/send_email.html', {'verified_email_addresses': verified_email_addresses})
+
+    source = request.POST['source']
+    destinations = {'ToAddresses': request.POST['destinations'].split(',')}
+    
+    body = request.POST['body']
+    subject = request.POST['subject']
+    message = {'Subject': {'Data': subject}, 'Body': {'Text': {'Data': body}}}
+
+    #response = ses_client.send_raw_email(Source='dinesh@micropyramid.com', RawMessage={'Data': data}, \
+    #        Destinations=['dinesh@micropyramid.com', ])
+    response = ses_client.send_email(Source='dinesh@micropyramid.com', Destination=destinations, Message=message)
+
+    return HttpResponseRedirect('/')

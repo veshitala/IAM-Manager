@@ -7,29 +7,49 @@
 			<div class="panel panel-primary policies_panel">
 				<div class="panel-heading">Simple Email Service</h3>
 				</div>
-                <form action="{% url 'send_email' '' %}" method="post" enctype='multipart/form-data'>{% csrf_token %}
+                <form class='form_cls' action="{% url 'send_email' '' %}" method="post" enctype='multipart/form-data'>{% csrf_token %}
 
 			<div class="table-responsive policies">
-                <br/>From: <select name='source'>
-                    {% for verified_email_address in verified_email_addresses %}
-                    <option value='{{ verified_email_address }}'>{{ verified_email_address }}</option>
-                    {% endfor %}
-                </select>
-                &nbsp;&nbsp;&nbsp;&nbsp;To: <select name='destinations'>
-                    {% for verified_email_address in verified_email_addresses %}
-                    <option value='{{ verified_email_address }}'>{{ verified_email_address }}</option>
-                    {% endfor %}
-                </select>
+                <br/>From: <input type='text' name='source'/> 
+                &nbsp;&nbsp;&nbsp;&nbsp;To: <input type='text' name='destinations'/>
                 <br/><br/>Region Name: <input type='text' name='region_name'/> 
                 <br/><br/>Subject: <input name='subject' type='text'/>
                 <br/><br/>body: <input name='body' type='textarea'/>
                 <br/><br/>Attachment: <input name='attachment' type='file' />
+                <br/><span class='error_cls'></span>
 			</div>
 			<div class="row btn_row">
-				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success" type="submit">Send</button></div>
+				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success send_cls" type="submit">Send</button></div>
 			</div>
 			</form>
 		</div>
 	</div>
 </div>
+
+<script>
+$('.form_cls').submit(function(e){
+    $('.send_cls').prop('disabled', true);
+    $('.send_cls').text('Sending..')
+    $.ajax( {
+      url: '{% url "send_email" "" %}',
+      type: 'POST',
+      data: new FormData(this),
+      processData: false,
+      contentType: false,
+      success: function(data){
+        if(data.error === true){
+            $('.error_cls').empty();
+            $('.error_cls').text(data.response);
+            $('.send_cls').prop('disabled', false);
+            $('.send_cls').text('Send')
+        }
+        else{
+            window.location = '/';
+        }
+      }
+    });
+    e.preventDefault();
+  });
+</script>
 {% endblock %}
+

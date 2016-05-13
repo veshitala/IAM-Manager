@@ -367,15 +367,20 @@ def send_email(request, region_name=None):
     
     part = MIMEText(request.POST['body'])
     msg.attach(part)
-    
+
     part = MIMEApplication(request.FILES['attachment'].read())
-    part.add_header('Content-Disposition', 'attachment', filename='weekly.pdf')
+    part.add_header('Content-Disposition', 'attachment', filename=request.FILES['attachment'].name)
     msg.attach(part)
     
     region_name = request.POST['region_name']
     session = boto3.Session(aws_access_key_id=request.session['access_key'], aws_secret_access_key=request.session['secret_key'])
     ses_client = session.client('ses', region_name=region_name)
     
-    response = ses_client.send_raw_email(RawMessage={'Data': msg.as_string()}, Source=msg['From'], \
-            Destinations=msg['To'].split(','))
+    try:
+        response = ses_client.send_raw_email(RawMessage={'Data': msg.as_string()}, Source=msg['From'], \
+                Destinations=msg['To'].split(','))
+    except Exception as e:
+        data = {'error': True, 'response': str(e)}
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
     return HttpResponseRedirect('/')

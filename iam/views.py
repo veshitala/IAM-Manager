@@ -375,7 +375,6 @@ def send_email(request, region_name=None):
     region_name = request.POST['region_name']
     session = boto3.Session(aws_access_key_id=request.session['access_key'], aws_secret_access_key=request.session['secret_key'])
     ses_client = session.client('ses', region_name=region_name)
-    
     try:
         response = ses_client.send_raw_email(RawMessage={'Data': msg.as_string()}, Source=msg['From'], \
                 Destinations=msg['To'].split(','))

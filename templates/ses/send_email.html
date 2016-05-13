@@ -10,12 +10,12 @@
                 <form class='form_cls' action="{% url 'send_email' '' %}" method="post" enctype='multipart/form-data'>{% csrf_token %}
 
 			<div class="table-responsive policies">
-                <br/>From: <input type='text' name='source'/> 
-                &nbsp;&nbsp;&nbsp;&nbsp;To: <input type='text' name='destinations'/>
-                <br/><br/>Region Name: <input type='text' name='region_name'/> 
-                <br/><br/>Subject: <input name='subject' type='text'/>
-                <br/><br/>body: <input name='body' type='textarea'/>
-                <br/><br/>Attachment: <input name='attachment' type='file' />
+                <br/><div class='email_cls'>From: <input class='box_cls' type='text' name='source'/></div>
+                <br/><br/><div class='email_cls'>To: &nbsp;<input placeholder='<email1>,<email2> etc..' class='box_cls' type='text' name='destinations'/></div> 
+                <br/><br/><div class='email_cls'>Region: <input placeholder='eg: us-west-2a' type='text' class='box_cls' name='region_name'/></div>
+                <br/><br/><div class='email_cls'>Subject: <input name='subject' class='box_cls' type='text'/></div>
+                <br/><br/><div class='email_cls'>body: <input name='body' style='height: 40%' class='box_cls' type='textarea'/></div>
+                <br/><br/><div class='email_cls'>Attachment: <input class='box_cls' name='attachment' type='file' /></div>
                 <br/><span class='error_cls'></span>
 			</div>
 			<div class="row btn_row">

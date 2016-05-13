@@ -22,6 +22,6 @@ urlpatterns = [
     url(r'^iam/custom-policy/(?P<user_name>[a-zA-Z0-9_-]+)/$', generate_custom_policy, name="generate_custom_policy"),
 
     # ses
-    url(r'ses/send-email/(?P<region_name>[^/]+)/$', send_email, name='send_email'),
+    url(r'ses/send-email/(?P<region_name>[^/]*)/$', send_email, name='send_email'),
 
 ]

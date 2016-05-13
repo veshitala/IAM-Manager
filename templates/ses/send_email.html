@@ -7,22 +7,23 @@
 			<div class="panel panel-primary policies_panel">
 				<div class="panel-heading">Simple Email Service</h3>
 				</div>
-					<form action="/ses/send-email/us-west-2/" method="post">{% csrf_token %}
+                <form action="{% url 'send_email' '' %}" method="post" enctype='multipart/form-data'>{% csrf_token %}
 
 			<div class="table-responsive policies">
-                <input type='hidden' name='region_name'/> 
-                From: <select name='source'>
+                <br/>From: <select name='source'>
                     {% for verified_email_address in verified_email_addresses %}
                     <option value='{{ verified_email_address }}'>{{ verified_email_address }}</option>
                     {% endfor %}
                 </select>
-                To: <select name='destinations'>
+                &nbsp;&nbsp;&nbsp;&nbsp;To: <select name='destinations'>
                     {% for verified_email_address in verified_email_addresses %}
                     <option value='{{ verified_email_address }}'>{{ verified_email_address }}</option>
                     {% endfor %}
                 </select>
-                <br/>Subject: <input name='subject' type='text'/>
-                <br/>body: <input name='body' type='textarea'/>
+                <br/><br/>Region Name: <input type='text' name='region_name'/> 
+                <br/><br/>Subject: <input name='subject' type='text'/>
+                <br/><br/>body: <input name='body' type='textarea'/>
+                <br/><br/>Attachment: <input name='attachment' type='file' />
 			</div>
 			<div class="row btn_row">
 				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success" type="submit">Send</button></div>

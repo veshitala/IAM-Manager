@@ -161,34 +161,56 @@ def generate_custom_policy(request, user_name):
         aws_access_key_id=request.session["access_key"],
         aws_secret_access_key=request.session["secret_key"])
 
+    client_ec2 = boto3.client(
+       'ec2', region_name="us-west-2",
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
+    )
+    response_instances = client_ec2.describe_instances()
     response_buckets = client_s3.list_buckets()
+
     if request.method == "POST":
-        create_policy_form = CreatePolicyForm(request.POST)
-        if create_policy_form.is_valid():
-            if request.POST.get("amazon_s3_service") == "s3":
-                bucket_name = str(request.POST.get("bucket_name"))
-                l = []
-                action = ''
-                for index, a in enumerate(request.POST.getlist("action")):
-                    action = 's3:'+str(a)
-                    l.append(action)
-                policy_document = '{"Version": "2012-10-17","Statement": [{"Sid": "","Effect": "Allow","Action": ['+str(l).strip('[]')+'],"Resource": ["arn:aws:s3:::'+bucket_name+'"]}]}'
-                policy_document = policy_document.replace("'", '"')
-                try:
-                    policy = client.create_policy(
-                        PolicyName=request.POST.get("policy_name"),
-                        PolicyDocument=policy_document
-                    )
-                    data = {'error': False}
-                    return HttpResponse(json.dumps(data))
-                except ClientError as e:
-                    data = {"error": True, "exception_error": str(e)}
-                    return HttpResponse(json.dumps(data))
+        statement = []
+        for dict in json.loads(request.POST.get("policy_document")):
+            l = []
+            action = ""
+            for index, a in enumerate(dict["action"]):
+                action = dict["aws_service"].split(":")[0]+':'+str(a)
+                l.append(action)
+            text = {}
+            text['Effect'] = "Allow"
+            text['Action'] = l
+            if dict["aws_service"].split(":")[0] == "s3":
+                text['Resource'] = "arn:aws:s3:::"+dict["aws_service"].split(":")[1]
+                statement.append(text)
+
+            elif dict["aws_service"].split(":")[0] == "ec2":
+                text['Resource'] = "arn:aws:ec2:us-west-2::"+dict["aws_service"].split(":")[1]
+                statement.append(text)
+        policy_document = '{"Version": "2012-10-17","Statement": ['+str(json.dumps(statement)).strip("[]")+']}'
+        policy_document = policy_document.replace("'", '"')
+        if request.POST.get("show_policy") == "show":
+            data = {'error': False, "policy_document": json.loads(policy_document)}
+            return HttpResponse(json.dumps(data))
         else:
-            data = {'error': True, 'response': create_policy_form.errors}
-        return HttpResponse(json.dumps(data))
+            try:
+                policy = client.create_policy(
+                    PolicyName=request.POST.get("policy_name"),
+                    PolicyDocument=policy_document
+                )
+                client.attach_user_policy(
+                    UserName=user_name,
+                    PolicyArn=policy["Policy"]["Arn"]
+                )
+                print (policy)
+                data = {'error': False}
+                return HttpResponse(json.dumps(data))
+            except ClientError as e:
+                print (str(e))
+                data = {'error': True, 'exception_error': str(e)}
+                return HttpResponse(json.dumps(data))
     else:
-        return render(request, "custom_policy.html", {"user_name": user_name, "response_buckets": response_buckets["Buckets"]})
+        return render(request, "policies.html", {"user_name": user_name, "response_buckets": response_buckets["Buckets"], "response_instances": response_instances["Reservations"]})
 
 
 def iam_user_details_download(request):
@@ -314,6 +336,19 @@ def policies_list(request, user_name):
             Scope='All',
             OnlyAttached=False
             )
+    client_s3 = boto3.client(
+        's3',
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
+
+    client_ec2 = boto3.client(
+       'ec2', region_name="us-west-2",
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
+    )
+    response_instances = client_ec2.describe_instances()
+    response_buckets = client_s3.list_buckets()
+
     if request.method == "POST":
         for policy in request.POST.getlist("policy"):
             client.attach_user_policy(
@@ -321,7 +356,7 @@ def policies_list(request, user_name):
                 PolicyArn=policy
             )
         return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
-    return render(request, "policies.html", {"response": response["Policies"], "user_name": user_name})
+    return render(request, "policies.html", {"response": response["Policies"], "user_name": user_name, "response_buckets": response_buckets["Buckets"], "response_instances": response_instances["Reservations"]})
 
 
 def detach_user_policies(request, user_name):

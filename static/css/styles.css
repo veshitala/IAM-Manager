@@ -222,7 +222,7 @@ body {
         margin-left: 0 !important;
         width: 30px;
         font-size: 27px;
-        height: 22px;
+        height: 16px;
     }
     .policy_table input[type=checkbox]{
         width: 25px;
@@ -311,6 +311,22 @@ overflow-y: scroll;
 .policies_panel{
     position: relative;
 }
+.policies_panel h3{
+    margin:0;
+}
+.policies_panel .panel-primary{
+    border:none;
+}
+.policies_panel .panel-primary .btn-block{
+    margin-bottom:10px;
+}
+.policies_panel .panel .panel-heading{
+    border:none;
+}
+.policies_panel input[type=radio]{
+    vertical-align: middle;
+    margin:6px 5px;
+}
 .policies_panel .custom_policy{
     position: absolute;
     bottom: 20px;
@@ -351,4 +367,73 @@ overflow-y: scroll;
     min-height: 45px;
     border:none;
     box-shadow: none;
+}
+.select_blocks{
+    margin-bottom: 0px;
+}
+.select_blocks .select_block{
+    width:41%;
+    float: left;
+    margin-right:1%;
+    margin-bottom:15px;
+}
+.select_blocks .select_block .select2-container--default .select2-selection--multiple .select2-selection__choice{
+    margin: 2px ;
+}
+.select_block_add{
+    float: left;
+}
+.select_block_add a{
+    display: inline-block;
+    padding:0;
+    width: 100%;
+    color: #fff;
+    float: left;
+}
+.select_blocks .remove_btn a{
+    display: inline-block;
+    padding: 8px 0 7px 0;
+    color: #fff;
+    float: left;
+    text-align: center;
+    width: 15%;
+    background: #333;
+}
+.select_blocks .select2-container--default.select2-container--focus .select2-selection--multiple{
+    border:none;
+    border-radius: 0;
+}
+.select_blocks .select2-container .select2-selection--multiple{
+    min-height: 34px;
+}
+.select_blocks .select2-container--default .select2-selection--multiple{
+    border-radius: 0;
+    outline:none;
+    box-shadow: none;
+    border: none;
+}
+.policies_settings{
+    margin:0px auto;
+}
+.pad_lr_0{
+    padding-left:0;
+    padding-right:0;
+}
+.policies_settings .panel{
+    margin-bottom:0px;
+    padding:0;
+    border:none;
+    box-shadow:none;
+    border-radius:0;
+    background:none;
+    margin-top: -66px;
+}
+.policies_settings .btn-block{
+    width: auto;
+    display: inline-block;
+    margin:0px 5px 10px 5px;
+}
+
+.select_blocks .select_block .chosen-container {
+width: 100% !important;
 }

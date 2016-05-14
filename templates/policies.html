@@ -2,51 +2,246 @@
 {% load iam_custom_tags %}
 {% block base %}
 <div class="container_block iam_user_list mar_auto">
-	<div class="row form_row" >
-		<div class="col-md-12 users_list">
-			<div class="panel panel-primary policies_panel">
-				<div class="panel-heading">Policies List</h3>
-				</div>
-					<form action="{% url 'policies_list' user_name  %}" method="post">{% csrf_token %}
+<div class="row form_row" >
+  <div class="col-md-12 users_list policies_panel">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3>Policies</h3>
+        <input type="radio" name="choose_type" id="existing_policy" value="existing_policy" class="choose_policy_type"><span>Existing Policy</span>
+        <input type="radio" name="choose_type" id="custom_policy" value="custom_policy" class="choose_policy_type"><span>Custom Policy</span>
+      </div>
 
-			<div class="table-responsive policies">
-				<table class="table table-hover table-bordered table-striped iam-list policy_table" id="dev-table">
-				<thead>
-					<tr>
-					<th></th>
-					<th>PolicyName</th>
-					<th>Created Date</th>
-					<th>ARN</th>
-					</tr>
-				</thead>
-				<tbody>
-				{% for policy in response %}
-					<tr>
-					<td><input type="checkbox" name="policy" value="{{ policy.Arn }}" {% for p in iam_user.policies.all %}{% if p.arn == policy.Arn %}checked{% endif %}{% endfor %}></td>
-					<td>{{ policy.PolicyName}}</td>
-					<td>{{ policy.CreateDate}}</td>
-					<td>{{ policy.Arn}}</td>
-					</tr>
-				{% endfor %}
-				</tbody>
-				</table>
-			</div>
-			<div class="row btn_row">
-				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success" type="submit">Attach Policy</button></div>
-			</div>
-			</form>
-			<button class="custom_policy btn btn-success">Custom Policy</button>
+        <div class="existing_policies" style="display:none;">
+        <form action="{% url 'policies_list' user_name  %}" method="post">
+        {% csrf_token %}
+          <div class="table-responsive policies">
+            <table class="table table-hover table-bordered table-striped iam-list policy_table" id="dev-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>PolicyName</th>
+                  <th>Created Date</th>
+                  <th>ARN</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for policy in response %}
+                <tr>
+                  <td><input type="checkbox" name="policy" value="{{ policy.Arn }}" {% for p in iam_user.policies.all %}{% if p.arn == policy.Arn %}checked{% endif %}{% endfor %}></td>
+                  <td>{{ policy.PolicyName}}</td>
+                  <td>{{ policy.CreateDate}}</td>
+                  <td>{{ policy.Arn}}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="row btn_row">
+            <div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success btn-block" type="submit">Attach Policy</button></div>
+          </div>
+      </form>
+      </div>
+      </div>
+      </div>
+      </div>
 
-			<!--<div class="row btn_row">
-				<div class="col-xs-6 col-md-2 pull-right"><button class="custom_policy btn btn-success btn-block btn-lg">Custom Policy</button></div>
-			</div>-->
-		</div>
-	</div>
-</div>
-
+      </div>
+      <div class="custom_policies" style="display:none; background:none;">
+        <div class="container_block settings policies_settings">
+          <div class="row">
+          	<div class="col-md-12 pad_lr_0">
+          		<div class="panel panel-default">
+		         	<div class="panel-body">
+		         	 <div class="row form_row">
+            <div class="col-md-12 gradient_panel download_iam_user_details">
+              <form role="form" id="custom_policy_form" class="col-md-12 go-right" method="post">
+                {% csrf_token %}
+                <h2 class="title">Custom Policy</h2>
+                <div class="form-group">
+                  <input type="text" id="policy_name" name="policy_name" tabindex="1" class="form-control" placeholder="Policy Name">
+                  <input type="hidden" name="show_policy" value="generate">
+                  <label for="name">Policy Name</label>
+                </div>
+                <div class=" add_new_service">
+                  <div class="select_blocks row text-left 1">
+                    <div class="form-group select2_panel select_block select_block2">
+                      <select data-placeholder="Amazon Service" class="chosen-select amazon_service" name="aws_service" tabindex="6" onchange="ActionsChange(1)" style="width:286px;">
+                        <option value=""></option>
+                        <optgroup label="S3">
+                          {% for bucket in response_buckets %}
+                          <option value="s3:{{ bucket.Name }}">{{ bucket.Name }}</option>
+                          {% endfor %}
+                        <optgroup>
+                        <optgroup label="EC2">
+                          {% for instance in response_instances %}
+                          {% for i in instance.Instances %}
+                          <option value="ec2:{{ i.KeyName }}">{{ i.KeyName }}</option>
+                          {% endfor %}
+                          {% endfor %}
+                        </optgroup>
+                      </select>
+                    </div>
+                    <div class="select_block select_block3">
+                      <select class="form-control actions js-example-basic-multiple" name="action" multiple="multiple">
+                        <option disabled>Actions</option>
+                      </select>
+                    </div>
+                    <div class="remove_btn">
+                      <a href="#" onclick="RemoveService(1)">remove</a>
+                    </div>
+                  </div>
+                </div>
+                <span class="select_block_add">
+                <a href="#">add more</a>
+                </span>
+                <br clear="all">
+                <div class="form-group show_policy_document" style="display:none;">
+                  <textarea class="policy_doc" rows="10" cols="20" readonly style="background:white"></textarea>
+                </div>
+                <p id="#exception_error"></p>
+                <div class="row btn_row text-left">
+                  <button class="btn btn-success btn-block btn-lg show_policy">Show Policy </button><button class="btn btn-success btn-block btn-lg generate_policy">Generate </button>
+                </div>
+              </form>
+            </div>
+          </div>
+		         	</div>
+		         </div>
+          	</div>
+          </div>	
+        </div>
+      </div>
+<script type="text/javascript" src="https://select2.github.io/dist/js/select2.full.js"></script>
 <script type="text/javascript">
-	$(".custom_policy").click(function(e){
-		window.location = "{% url 'generate_custom_policy' user_name  %}"
-	})
+
+  $(".choose_policy_type").change(function(e){
+    	if ($('#existing_policy').is(':checked')){
+  		$(".existing_policies").show()
+  		$(".custom_policies").hide()
+  	}
+    	else if ($('#custom_policy').is(':checked')){
+    		$(".existing_policies").hide()
+    		$(".custom_policies").show()
+    	}
+    	$(function() {
+    $('.chosen-select').chosen();
+  });
+  $(".js-example-basic-multiple").select2();
+  });
+</script>
+<script type="text/javascript">
+  $(function() {
+    $('.chosen-select').chosen();
+    $('.chosen-select-deselect').chosen({ allow_single_deselect: true });
+  });
+  $(".js-example-basic-multiple").select2();
+
+  actions_list = []
+  s3_actions = ["CreateBucket", "DeleteBucket", "GetObject", "ListBucket", "DeleteObject"]
+  ec2_actions = ["DeleteKeyPair", "CreateKeyPair", "CopyImage", "CreateImage"]
+  $(s3_actions).each(function(e, item){
+  actions = {}
+  actions['class'] = "s3"
+  actions['value'] = item
+  actions["name"] = item
+  actions_list.push(actions)
+  });
+  $(ec2_actions).each(function(e, item){
+  actions = {}
+  actions['class'] = "ec2"
+  actions['value'] = item
+  actions["name"] = item
+  actions_list.push(actions)
+  });
+
+  function ActionsChange(div_class){
+  $(".select_blocks."+div_class+" .select_block3 select.actions option").remove()
+  select_service = $(".select_blocks."+div_class+" .select_block2 .amazon_service option:selected").val().split(':')[0]
+  actions_select = $(".select_blocks."+div_class+" .select_block3 select.actions")
+  actions_select.append("<option value=''>Please Select Option</option>")
+  $(actions_list).each(function(e){
+  if ((select_service == actions_list[e]["class"])){
+  actions_select.append("<option value="+actions_list[e]["value"]+">"+actions_list[e]["name"]+"</option>")
+  }
+  })
+  }
+
+  function RemoveService(div_class){
+  if ($(".add_new_service .select_blocks").length > 1){
+  	$(".select_blocks."+div_class).remove()
+  	}
+  else{
+  	alert("You cannot delete this")
+  	}
+}
+
+  $(".select_block_add").click(function(e){
+
+    $(".failure").remove()
+    $(".failure_error").remove()
+    $(".add_new_service").append('<div class="select_blocks row text-left '+($("div.select_blocks").length+1)+'"><div class="form-group select2_panel select_block select_block2"><select data-placeholder="Amazon Service" class="chosen-select amazon_service" name="aws_service" tabindex="6" onchange="ActionsChange('+($("div.select_blocks").length+1)+')"><option value=""></option><optgroup label="S3">{% for bucket in response_buckets %}<option value="s3:{{ bucket.Name }}">{{ bucket.Name }}</option>{% endfor %}<optgroup><optgroup label="EC2">{% for instance in response_instances %}{% for i in instance.Instances %}<option value="ec2:{{ i.KeyName }}">{{ i.KeyName }}</option>{% endfor %}{% endfor %}</optgroup></select></div><div class="select_block select_block3"><select class="form-control js-example-basic-multiple actions" name="action" multiple="multiple"><option>Actions</option></select></div><div class="remove_btn"><a href="#" onclick="RemoveService('+($("div.select_blocks").length+1)+')">remove</a></div></div>')
+    $(function() {
+      $('.chosen-select').chosen();
+      $('.chosen-select-deselect').chosen({ allow_single_deselect: true });
+    });
+    $(".js-example-basic-multiple").select2();
+  })
+
+  $("#custom_policy_form").submit(function(event) {
+    event.preventDefault()
+    files_data = []
+    $(".failure_error").remove()
+    $(".failure").remove()
+    $.each( $("div.select_blocks"), function( i, field ) {
+    temp = {}
+    temp["aws_service"] = $(this).find("select[name='aws_service']").val()
+    temp["action"] = $(this).find("select[name='action']").val()
+    temp["policy_name"] = $("#custom_policy_form").find("input[name='policy_name']").val()
+
+      if (!(temp["aws_service"] && temp["action"] && temp["policy_name"])) {
+        if (!temp["aws_service"]){
+          $(this).find("select[name='aws_service']").after('<p class="failure">This Field is Required</p>');
+        }
+        if (!temp["policy_name"]){
+          $(".failure_error").remove()
+            $("#custom_policy_form").find("input[name='policy_name']").after('<p class="failure_error">This Field is Required</p>');
+        }
+        if (!temp["action"]){
+          $(this).find("select[name='action']").after('<p class="failure">This Field is Required</p>');
+        }
+        return true;
+
+      }
+      else{
+          files_data.push(temp)
+        }
+    });
+    if(files_data.length == $("div.select_blocks").length){
+    $.post('{% url "generate_custom_policy" user_name %}', {'policy_document':JSON.stringify(files_data), 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val(), "policy_name": $("#custom_policy_form").find("input[name='policy_name']").val(), "show_policy":$("#custom_policy_form").find("input[name='show_policy']").val()}, function(data) {
+    $(".policy_doc").html(JSON.stringify(data.policy_document, null, "\t"))
+    if(data.error){
+      $('p.failure').remove();
+      if(data.exception_error){
+        $('#exception_error').after('<p class="failure">'+data.exception_error+'</p>');
+      }
+    }else{
+      if(!data.policy_document){
+      window.location = ".";
+    }
+    }
+    }, 'json')
+  }
+  });
+
+  $(".show_policy").click(function(e){
+  $("input[name='show_policy']").val("show")
+  $(".show_policy_document").show()
+  $("#custom_policy_form").submit();
+  })
+
+  $(".generate_policy").click(function(e){
+  $("input[name='show_policy']").val("generate")
+  $("#custom_policy_form").submit();
+  })
 </script>
 {% endblock %}

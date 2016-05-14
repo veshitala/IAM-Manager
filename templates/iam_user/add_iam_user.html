@@ -11,22 +11,24 @@
           <input name="username" type="text" class="form-control">
           <label for="name">UserName</label>
         </div>
-        <div class="form-group checkbox checkbox_block text-left">
+        <div class="form-group row checkbox checkbox_block text-left">
           <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" name="iam_user_password" id="iam_user_password"></div>
           <div class="col-md-11 col-xs-11">
             <span>Create Password for IAM User</span>
           </div>
+          <br clear="all">
         </div>
-        <div class="form-group iam_user_pwd" id="password" style="display:none;">
+        <div class="form-group row iam_user_pwd" id="password" style="display:none;">
           <input  name="password" type="password" class="form-control">
           <label for="name">Password</label>
         </div>
-        <div class="form-group checkbox checkbox_block text-left">
+        <div class="form-group checkbox row checkbox_block text-left">
           <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" name="generate_keys"></div>
           <div class="col-md-11 col-xs-11">
             <span>Generate an access key for user</span>
             <p>Users need access keys to make secure REST or Query protocol requests to AWS service APIs.</p>
           </div>
+          <br clear="all">
         </div>
         <!--<div class="form-group checkbox checkbox_block text-left">
           <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" class="ec2_checkbox" name="ec2" value="ec2"></div>

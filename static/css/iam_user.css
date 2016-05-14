@@ -4,14 +4,7 @@
 .form-control{
     background: transparent;
 }
-form {
-  /*width: 320px;*/
-  margin: 0px;
-}
-form > div {
-  position: relative;
-  overflow: hidden;
-}
+
 form label{
   display: block;
 }

@@ -31,7 +31,6 @@
                   <td>{{ policy.PolicyName}}</td>
                   <td>{{ policy.CreateDate}}</td>
                   <td>{{ policy.Arn}}</td>
-                  <td><a href="{% url 'delete_policy' policy.Arn %}"><i class="fa-fa-trash"></i></a></td>
                 </tr>
                 {% endfor %}
               </tbody>

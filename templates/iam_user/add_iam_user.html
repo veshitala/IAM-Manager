@@ -30,19 +30,6 @@
           </div>
           <br clear="all">
         </div>
-        <!--<div class="form-group checkbox checkbox_block text-left">
-          <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" class="ec2_checkbox" name="ec2" value="ec2"></div>
-          <div class="col-md-11 col-xs-11">
-          <span>EC2</span>
-          </div>
-          </div>
-          
-          <div class="form-group checkbox checkbox_block text-left">
-          <div class="col-md-1 col-xs-1 text-left"><input type="checkbox" name="rds" class="rds_checkbox" value="rds"></div>
-          <div class="col-md-11 col-xs-11">
-          <span>RDS</span>
-          </div>
-          </div>-->
         <p id="error"></p>
         <div class="row btn_row">
           <div class="col-xs-6 col-md-6"><button class="btn btn-success btn-block btn-lg add_iam_user" type="submit">Create</button></div>
@@ -116,43 +103,20 @@
             }
             }
             else{
-              console.log(data.iam_access_key)
-              console.log(data.iam_secret_key)
+              if (data.iam_access_key && data.iam_secret_key){
               $(".iam_user_div").hide()
               $(".download_iam_user_details").show()
               $("#download_username").val(data.iam_username)
               $("#download_access_key").val(data.iam_access_key)
               $("#download_secret_key").val(data.iam_secret_key)
             }
+            else{
+              window.location = '{% url "iam_users_list" %}'
+            }
+            }
           },"json");
         });
-        $(".ec2_checkbox").change(function(e){
-          e.preventDefault();
-          if ($(".ec2_checkbox").val() == "ec2"){
-          $("#ec2_div").show()
-        }
-      });
-        $(".s3_checkbox").change(function(e){
-          e.preventDefault();
 
-        if ($(".s3_checkbox").val() == "s3"){
-          $("#s3_div").show()
-        }
-      });
-        $(".rds_checkbox").change(function(e){
-          e.preventDefault();
-        if ($(".rds_checkbox").val() == "rds"){
-          $("#rds_div").show()
-        }
-        });
-
-   $(".ec2_checkbox").change(function(e){
-          e.preventDefault();
-          if ($(".ec2_checkbox").val() == "ec2"){
-          $(".policy").show()
-        }
-      });
-        
 </script>
 {% endblock %}
 </html>

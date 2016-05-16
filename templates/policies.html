@@ -31,6 +31,7 @@
                   <td>{{ policy.PolicyName}}</td>
                   <td>{{ policy.CreateDate}}</td>
                   <td>{{ policy.Arn}}</td>
+                  <td><a href="{% url 'delete_policy' policy.Arn %}"><i class="fa-fa-trash"></i></a></td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -176,15 +177,23 @@
 }
 
   $(".select_block_add").click(function(e){
-
     $(".failure").remove()
     $(".failure_error").remove()
+    aws_divs = $(".select_block_add").prev().children().last().children()[0]
+    aws_select_box = $(aws_divs).children()
+    action_divs = $(".select_block_add").prev().children().last().children()[1]
+    action_select_box = $(action_divs).children()
+    if ($(aws_select_box).val() && $(action_select_box).val()){
     $(".add_new_service").append('<div class="select_blocks row text-left '+($("div.select_blocks").length+1)+'"><div class="form-group select2_panel select_block select_block2"><select data-placeholder="Amazon Service" class="chosen-select amazon_service" name="aws_service" tabindex="6" onchange="ActionsChange('+($("div.select_blocks").length+1)+')"><option value=""></option><optgroup label="S3">{% for bucket in response_buckets %}<option value="s3:{{ bucket.Name }}">{{ bucket.Name }}</option>{% endfor %}<optgroup><optgroup label="EC2">{% for instance in response_instances %}{% for i in instance.Instances %}<option value="ec2:{{ i.KeyName }}">{{ i.KeyName }}</option>{% endfor %}{% endfor %}</optgroup></select></div><div class="select_block select_block3"><select class="form-control js-example-basic-multiple actions" name="action" multiple="multiple"><option>Actions</option></select></div><div class="remove_btn"><a href="#" onclick="RemoveService('+($("div.select_blocks").length+1)+')">remove</a></div></div>')
     $(function() {
       $('.chosen-select').chosen();
       $('.chosen-select-deselect').chosen({ allow_single_deselect: true });
     });
     $(".js-example-basic-multiple").select2();
+  }
+  else{
+    alert("Please Choose Aws Service and action")
+  }
   })
 
   $("#custom_policy_form").submit(function(event) {
@@ -206,7 +215,7 @@
           $(".failure_error").remove()
             $("#custom_policy_form").find("input[name='policy_name']").after('<p class="failure_error">This Field is Required</p>');
         }
-        if (!temp["action"]){
+        if (temp["aws_service"] && !temp["action"]){
           $(this).find("select[name='action']").after('<p class="failure">This Field is Required</p>');
         }
         return true;
@@ -216,7 +225,7 @@
           files_data.push(temp)
         }
     });
-    if(files_data.length == $("div.select_blocks").length){
+    if(files_data.length){
     $.post('{% url "generate_custom_policy" user_name %}', {'policy_document':JSON.stringify(files_data), 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val(), "policy_name": $("#custom_policy_form").find("input[name='policy_name']").val(), "show_policy":$("#custom_policy_form").find("input[name='show_policy']").val()}, function(data) {
     $(".policy_doc").html(JSON.stringify(data.policy_document, null, "\t"))
     if(data.error){

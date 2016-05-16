@@ -310,7 +310,7 @@ def iam_user_change_password(request, user_name):
                     data = {"error": False}
                     return HttpResponse(json.dumps(data))
                 except ClientError as e:
-                    data = {"error": True, "response": "Password Should contain atleast one UpperCase letter, LowerCase letter and Numbers."}
+                    data = {"error": True, "response": str(e)}
                     return HttpResponse(json.dumps(data))
         else:
             data = {'error': True, 'response': "Please enter new password and confirm password."}

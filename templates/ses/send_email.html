@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block base %}
+<div class="container_block iam_user_list mar_auto">
+	<div class="row form_row" >
+		<div class="col-md-12 users_list">
+			<div class="panel panel-primary policies_panel">
+				<div class="panel-heading">Simple Email Service</h3>
+				</div>
+                <form class='form_cls' action="{% url 'send_email' '' %}" method="post" enctype='multipart/form-data'>{% csrf_token %}
+
+			<div class="table-responsive policies">
+                <br/><div class='email_cls'>From: <input class='box_cls' type='text' name='source'/></div>
+                <br/><br/><div class='email_cls'>To: &nbsp;<input placeholder='<email1>,<email2> etc..' class='box_cls' type='text' name='destinations'/></div> 
+                <br/><br/><div class='email_cls'>Region: <input placeholder='eg: us-west-2a' type='text' class='box_cls' name='region_name'/></div>
+                <br/><br/><div class='email_cls'>Subject: <input name='subject' class='box_cls' type='text'/></div>
+                <br/><br/><div class='email_cls'>body: <input name='body' style='height: 40%' class='box_cls' type='textarea'/></div>
+                <br/><br/><div class='email_cls'>Attachment: <input class='box_cls' name='attachment' type='file' /></div>
+                <br/><span class='error_cls'></span>
+			</div>
+			<div class="row btn_row">
+				<div class="col-xs-6 col-md-2 pull-right"><button class="btn btn-success send_cls" type="submit">Send</button></div>
+			</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+$('.form_cls').submit(function(e){
+    $('.send_cls').prop('disabled', true);
+    $('.send_cls').text('Sending..')
+    $.ajax( {
+      url: '{% url "send_email" "" %}',
+      type: 'POST',
+      data: new FormData(this),
+      processData: false,
+      contentType: false,
+      success: function(data){
+        if(data.error === true){
+            $('.error_cls').empty();
+            $('.error_cls').text(data.response);
+            $('.send_cls').prop('disabled', false);
+            $('.send_cls').text('Send')
+        }
+        else{
+            window.location = '/';
+        }
+      }
+    });
+    e.preventDefault();
+  });
+</script>
+{% endblock %}
+

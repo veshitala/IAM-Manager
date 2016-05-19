@@ -352,3 +352,11 @@ overflow-y: scroll;
     border:none;
     box-shadow: none;
 }
+.email_cls{
+    width: 40%;
+    text-align: left;
+    display: inline-flex;
+}
+.box_cls{
+    margin-left: 24px;
+}

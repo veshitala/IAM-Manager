@@ -1,11 +1,14 @@
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+import json
+import boto3
+import csv
 from django.shortcuts import render
 from django.contrib.auth import logout
 from django.http.response import HttpResponse, HttpResponseRedirect
 from iam.models import *
 from iam.forms import *
-import json
-import boto3
-import csv
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
 from .forms import CreatePolicyForm
@@ -344,3 +347,39 @@ def detach_user_policies(request, user_name):
         PolicyArn=request.GET.get("policy_arn")
     )
     return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
+
+
+def send_email(request, region_name=None):
+    if request.method == 'GET':
+        session = boto3.Session(aws_access_key_id=request.session["access_key"], aws_secret_access_key=request.session["secret_key"])
+        ses_client = session.client('ses', region_name=region_name)
+
+        verified_email_addresses = ses_client.list_verified_email_addresses()['VerifiedEmailAddresses']
+        return render(request, 'ses/send_email.html', {'verified_email_addresses': verified_email_addresses})
+
+    msg = MIMEMultipart()
+    msg['Subject'] = request.POST['subject']
+    msg['From'] = request.POST['source']
+    msg['To'] = request.POST['destinations']
+    
+    # what a recipient sees if they don't use an email reader
+    msg.preamble = 'Multipart message.\n'
+    
+    part = MIMEText(request.POST['body'])
+    msg.attach(part)
+
+    part = MIMEApplication(request.FILES['attachment'].read())
+    part.add_header('Content-Disposition', 'attachment', filename=request.FILES['attachment'].name)
+    msg.attach(part)
+    
+    region_name = request.POST['region_name']
+    session = boto3.Session(aws_access_key_id=request.session['access_key'], aws_secret_access_key=request.session['secret_key'])
+    ses_client = session.client('ses', region_name=region_name)
+    try:
+        response = ses_client.send_raw_email(RawMessage={'Data': msg.as_string()}, Source=msg['From'], \
+                Destinations=msg['To'].split(','))
+    except Exception as e:
+        data = {'error': True, 'response': str(e)}
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    return HttpResponseRedirect('/')

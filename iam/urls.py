@@ -15,10 +15,16 @@ urlpatterns = [
     url(r'^iam/user/detail/(?P<user_name>[a-zA-Z0-9_-]+)/$', iam_user_detail, name="iam_user_detail"),
     url(r'^iam/user/change-password/(?P<user_name>[a-zA-Z0-9_-]+)/$', iam_user_change_password, name="iam_user_change_password"),
     url(r'^iam/user/details/download/$', iam_user_details_download, name="iam_user_details_download"),
+    url(r'^iam/user/delete/(?P<user_name>[a-zA-Z0-9_-]+)/$', delete_iam_user, name="delete_iam_user"),
 
     # policies
     url(r'^policies/(?P<user_name>[a-zA-Z0-9_-]+)/$', policies_list, name="policies_list"),
     url(r'^iam-userpolicy/detach/(?P<user_name>[a-zA-Z0-9_-]+)/$', detach_user_policies, name="detach_user_policies"),
     url(r'^iam/custom-policy/(?P<user_name>[a-zA-Z0-9_-]+)/$', generate_custom_policy, name="generate_custom_policy"),
 
+    # EC2 Instances
+    url(r'^ec2-instances/list/$', ec2_instances_list, name="ec2_instances_list"),
+
+    # S3 Buckets
+    url(r'^s3-buckets/list/$', s3_buckets_list, name="s3_buckets_list"),
 ]

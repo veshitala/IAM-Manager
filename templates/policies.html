@@ -363,11 +363,9 @@ buckets_list.push(buckets_dict)
   
   $(".show_policy").click(function(e){
     e.preventDefault();
-  $("#custom_policy_form").submit();
   $("input[name='show_policy']").val("show")
-  if (!$(".error").length){
   $(".show_policy_document").show()
-}
+  $("#custom_policy_form").submit();
   })
   
   $(".generate_policy").click(function(e){

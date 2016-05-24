@@ -27,4 +27,8 @@ urlpatterns = [
 
     # S3 Buckets
     url(r'^s3-buckets/list/$', s3_buckets_list, name="s3_buckets_list"),
+       
+    # ses
+    url(r'ses/send-email/(?P<region_name>[^/]*)/$', send_email, name='send_email'),
+
 ]

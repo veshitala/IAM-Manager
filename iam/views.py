@@ -162,13 +162,12 @@ def generate_custom_policy(request, user_name):
         aws_access_key_id=request.session["access_key"],
         aws_secret_access_key=request.session["secret_key"])
     client_ec2 = boto3.client(
-       'ec2', region_name=request.GET.get("region"),
+       'ec2', region_name=request.POST.get("region"),
        aws_access_key_id=request.session["access_key"],
        aws_secret_access_key=request.session["secret_key"]
     )
     response_instances = client_ec2.describe_instances()
     response_buckets = client_s3.list_buckets()
-
     if request.method == "POST":
         statement = []
         for dict in json.loads(request.POST.get("policy_document")):
@@ -185,7 +184,7 @@ def generate_custom_policy(request, user_name):
                 statement.append(text)
 
             elif dict["aws_service"] == "ec2":
-                text['Resource'] = "arn:aws:ec2:"+request.GET.get("region")+"::"+dict["service_type"]
+                text['Resource'] = "arn:aws:ec2:"+request.POST.get("region")+"::"+dict["service_type"]
                 statement.append(text)
         policy_document = '{"Version": "2012-10-17","Statement": ['+str(json.dumps(statement)).strip("[]")+']}'
         policy_document = policy_document.replace("'", '"')
@@ -209,7 +208,8 @@ def generate_custom_policy(request, user_name):
                 return HttpResponse(json.dumps(data))
     else:
         return render(request, "policies.html", {"user_name": user_name, "response_buckets": response_buckets["Buckets"],
-                                                 "response_instances": response_instances["Reservations"]})
+                                                 "response_instances": response_instances["Reservations"],
+                                                 "user_policies": user_policies["AttachedPolicies"], "response": response["Policies"]})
 
 
 def iam_user_details_download(request):
@@ -263,7 +263,8 @@ def iam_user_detail(request, user_name):
 
     if request.GET.get("generate_keys"):
         response = client.create_access_key(UserName=user_name)
-        return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
+        data = {"error": False, "iam_username": response["AccessKey"]["UserName"], "iam_access_key": response["AccessKey"]["AccessKeyId"], "iam_secret_key": response["AccessKey"]["SecretAccessKey"]}
+        return HttpResponse(json.dumps(data))
 
     response = client.get_user(UserName=user_name)
 
@@ -304,7 +305,7 @@ def iam_user_change_password(request, user_name):
                     client.create_login_profile(
                         UserName=user_name,
                         Password=request.POST.get("new_pwd"),
-                        PasswordResetRequired=False
+                        PasswordResetRequired=True
                     )
                     data = {"error": False}
                     return HttpResponse(json.dumps(data))
@@ -344,7 +345,7 @@ def policies_list(request, user_name):
         aws_secret_access_key=request.session["secret_key"])
 
     client_ec2 = boto3.client(
-       'ec2', region_name="us-west-2",
+       'ec2', region_name=request.POST.get("region") if request.POST.get("region") else "us-west-2",
        aws_access_key_id=request.session["access_key"],
        aws_secret_access_key=request.session["secret_key"]
     )
@@ -352,13 +353,25 @@ def policies_list(request, user_name):
     response_buckets = client_s3.list_buckets()
 
     if request.method == "POST":
-        for policy in request.POST.getlist("policy"):
-            client.attach_user_policy(
-                UserName=user_name,
-                PolicyArn=policy
-            )
-        return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
-    return render(request, "policies.html", {"user_policies": user_policies["AttachedPolicies"], "response": response["Policies"], "user_name": user_name, "response_buckets": response_buckets["Buckets"], "response_instances": response_instances["Reservations"]})
+        if request.POST.getlist("policy"):
+            for policy in request.POST.getlist("policy"):
+                client.attach_user_policy(
+                    UserName=user_name,
+                    PolicyArn=policy
+                )
+            return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
+        if request.POST.get("region"):
+            l = []
+            for instance in response_instances["Reservations"]:
+                for i in instance["Instances"]:
+                    dict = {}
+                    dict["name"] = i["KeyName"]
+                    dict["region"] = i["Placement"]["AvailabilityZone"]
+                    l.append(dict)
+            data = {'error': False, "response_instances": l}
+            return HttpResponse(json.dumps(data))
+    else:
+        return render(request, "policies.html", {"user_policies": user_policies["AttachedPolicies"], "response": response["Policies"], "user_name": user_name, "response_buckets": response_buckets["Buckets"], "response_instances": response_instances["Reservations"]})
 
 
 def detach_user_policies(request, user_name):

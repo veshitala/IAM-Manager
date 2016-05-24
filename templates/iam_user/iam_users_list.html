@@ -32,7 +32,7 @@
 								<td>{{ user.UserName}}</td>
 								<td>{{ user.CreateDate}}</td>
 								<td class="actions" align="center"><a href="{% url 'iam_user_detail' user.UserName %}"><i class="fa fa-eye"></i></a>
-								<a href="{% url 'delete_iam_user' user.UserName %}" class="delete"><i class="fa fa-trash"></i></a></td>
+								<a data-href="{% url 'delete_iam_user' user.UserName %}" class="delete delete_confirmation"><i class="fa fa-trash"></i></a></td>
 								</tr>
 						{% endfor %}
 						</tbody>

@@ -19,8 +19,8 @@
       </div>
       <div class="panel-body">
         <div class="row choose_policy mar_lr text-center">
-          <span class="red choose_radio"><input type="radio" name="choose_type" checked id="attached_policy" value="attached_policy" class="choose_policy_type"><span>Attached Policy</span></span>
-          <span class="choose_radio"><input type="radio" name="choose_type" id="existing_policy" value="existing_policy" class="choose_policy_type"><span>Default Policy</span></span>
+          <span class="red choose_radio"><input type="radio" name="choose_type" checked id="attached_policy" value="attached_policy" class="choose_policy_type"><span>Attached Policies</span></span>
+          <span class="choose_radio"><input type="radio" name="choose_type" id="existing_policy" value="existing_policy" class="choose_policy_type"><span>Default Policies</span></span>
           <span class="choose_radio"><input type="radio" name="choose_type" id="custom_policy" value="custom_policy" class="choose_policy_type"><span>Custom Policy</span></span>
         </div>
         <div class="row choose_policy mar_lr custom_policies"  style="display:none;">
@@ -30,9 +30,17 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                <select class="form-control bucket_select" data-placeholder="Region" name="region">
-                  <option value="us-west-2">us-west-2</option>
-                  <option value="us-east-1">us-east-1</option>
+                <select class="form-control bucket_select" data-placeholder="Region" name="region" onchange="RegionChange()">
+                  <option value="us-west-2">US West (Oregon)</option>
+                  <option value="us-east-1">US East (N. Virginia)</option>
+                  <option value="us-west-1">US West (N. California)</option>
+                  <option value="eu-west-1">EU (Ireland)</option>
+                  <option value="eu-central-1">EU (Frankfurt)</option>
+                  <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                  <option value="ap-southeast-2">Asia Pacific (Sydney)</option>
+                  <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
+                  <option value="sa-east-1">South America (São Paulo)</option>
+
                 </select>
               </div>
               </div>
@@ -87,7 +95,7 @@
         </div>
         <div class="row choose_policy mar_lr user_policy">
           {% if user_policies %}
-          <h3 class="attached_policy"><span>Attached Policy</span></h3>
+          <h3 class="attached_policy"><span>Attached Policies</span></h3>
           <div class="table-responsive">
              <table class="table table-hover table-striped table-condensed table-bordered iam-list" id="dev-table">
             <thead>
@@ -102,7 +110,7 @@
               <tr>
                 <td>{{ p.PolicyName }}</td>
                 <td>{{ p.PolicyArn }}</td>
-                <td class="actions" align="center"><a href="{% url 'detach_user_policies' user_name %}?policy_arn={{p.PolicyArn}}" class="delete"><i class="fa fa-trash"></i></a></td>
+                <td class="actions" align="center"><a data-href="{% url 'detach_user_policies' user_name %}?policy_arn={{p.PolicyArn}}" class="delete delete_confirmation"><i class="fa fa-trash"></i></a></td>
               </tr>
               {% endfor %}
             </tbody>
@@ -113,7 +121,7 @@
           {% endif %}
         </div>
         <div class="row choose_policy mar_lr existing_policies" style="display:none;">
-          <h3 class="attached_policy"><span>Default Policy</span></h3>
+          <h3 class="attached_policy"><span>Default Policies</span></h3>
           <form action="{% url 'policies_list' user_name  %}" method="post">{% csrf_token %}
           <div class="table-scroll">
           <table class="table table-hover table-striped table-condensed table-bordered iam-list" id="dev-table">
@@ -129,7 +137,7 @@
 
               {% for policy in response %}
                 <tr>
-                  <td><input type="checkbox" name="policy" value="{{ policy.Arn }}" {% for p in user_policies %}{% if p.PolicyArn == policy.Arn %}checked{% endif %}{% endfor %}></td>
+                  <td><input type="hidden" class="region_in_default" name="region" value=""><input type="checkbox" name="policy" value="{{ policy.Arn }}" {% for p in user_policies %}{% if p.PolicyArn == policy.Arn %}checked{% endif %}{% endfor %}></td>
                   <td>{{ policy.PolicyName}}</td>
                   <td>{{ policy.CreateDate}}</td>
                   <td>{{ policy.Arn}}</td>
@@ -153,6 +161,7 @@
 {% block extra_js %}
 <script type="text/javascript" src="https://select2.github.io/dist/js/select2.full.js"></script>
 <script type="text/javascript">
+$('.region_in_default').val($("#custom_policy_form").find("select[name='region']").val())
 buckets_list = []
 {% for bucket in response_buckets %}
 buckets_dict = {}
@@ -160,17 +169,6 @@ buckets_dict["value"] = "{{ bucket.Name }}"
 buckets_dict["name"] = "{{ bucket.Name }}"
 buckets_dict["class"] = "s3"
 buckets_list.push(buckets_dict)
-{% endfor %}
-
-instances_list = []
-{% for instance in response_instances %}
-{% for i in instance.Instances %}
-instances_dict = {}
-instances_dict["value"] = "{{ i.KeyName }}"
-instances_dict["name"] = "{{ i.KeyName }}"
-instances_dict["class"] = "ec2"
-instances_list.push(instances_dict)
-{% endfor %}
 {% endfor %}
 
 
@@ -221,6 +219,7 @@ instances_list.push(instances_dict)
   });
 
   function ServiceChange(div_class){
+    region = $("#custom_policy_form").find("select[name='region']").val()
   	$(".select_blocks."+div_class+" .select_block1 select.service_type option").remove()
   select_service = $(".select_blocks."+div_class+" .select_block2 .amazon_service option:selected").val()
   service_type_select = $(".select_blocks."+div_class+" .select_block1 select.service_type")
@@ -231,11 +230,43 @@ instances_list.push(instances_dict)
 	  })
  }
   else if (select_service == "ec2"){
-  		$(instances_list).each(function(e){
-	  service_type_select.append("<option value="+instances_list[e]["value"]+">"+instances_list[e]["name"]+"</option>")
-	  })
-  }
+    $(".select_blocks."+div_class+" .select_block1 select.service_type option").remove()
+    service_type_select.append("<option value=''>Please Select Option</option>")
+    $.post("{% url 'policies_list' user_name %}", {"region": region, 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val()}, function(data){
+      $(data.response_instances).each(function(e){
+        if (data.response_instances[e]["region"].slice(0, -1) == region){
+          service_type_select.append("<option value="+data.response_instances[e]["name"]+">"+data.response_instances[e]["name"]+"</option>")
+        }
+          }); 
+          }, 'json');
+        }
   
+  }
+
+  function RegionChange(){
+    region = $("#custom_policy_form").find("select[name='region']").val()
+    $.post("{% url 'policies_list' user_name %}", {"region": region, 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val()}, function(data){
+        $(".service_type option").remove()
+      options = ''
+      $(data.response_instances).each(function(e){
+        options += ("<option value="+data.response_instances[e]["name"]+">"+data.response_instances[e]["name"]+"</option>")
+        }); 
+      buckets_options = ""
+      $(buckets_list).each(function(e){
+         buckets_options += ("<option value="+buckets_list[e]["value"]+">"+buckets_list[e]["name"]+"</option>")
+          })
+      $(".service_type").each(function(e){
+        $(this).append("<option value=''>Please select option</option")
+        a = $(this).parent().parent().parent().children()[0]
+        s = $(a).children().children().val()
+        if (s == "ec2"){
+          $(this).append(options)
+        }
+        else if(s == "s3"){
+        $(this).append(buckets_options)
+        }
+      })
+    }, 'json');
   }
   
   function ActionsChange(div_class){
@@ -314,7 +345,7 @@ instances_list.push(instances_dict)
         }
     });
     if(files_data.length){
-    $.post('{% url "generate_custom_policy" user_name %}?region='+$("#custom_policy_form").find("select[name='region']").val()+'', {'policy_document':JSON.stringify(files_data), 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val(), "policy_name": $("#custom_policy_form").find("input[name='policy_name']").val(), "show_policy":$("#custom_policy_form").find("input[name='show_policy']").val()}, function(data) {
+    $.post('{% url "generate_custom_policy" user_name %}', {'policy_document':JSON.stringify(files_data), 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val(), "policy_name": $("#custom_policy_form").find("input[name='policy_name']").val(), "show_policy":$("#custom_policy_form").find("input[name='show_policy']").val(), "region":$("#custom_policy_form").find("select[name='region']").val()}, function(data) {
     $(".policy_doc").html(JSON.stringify(data.policy_document, null, "\t"))
     if(data.error){
       $('p.failure').remove();
@@ -331,10 +362,12 @@ instances_list.push(instances_dict)
   });
   
   $(".show_policy").click(function(e){
-  	e.preventDefault();
-  $("input[name='show_policy']").val("show")
-  $(".show_policy_document").show()
+    e.preventDefault();
   $("#custom_policy_form").submit();
+  $("input[name='show_policy']").val("show")
+  if (!$(".error").length){
+  $(".show_policy_document").show()
+}
   })
   
   $(".generate_policy").click(function(e){

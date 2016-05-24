@@ -7,11 +7,8 @@ import csv
 from django.shortcuts import render
 from django.contrib.auth import logout
 from django.http.response import HttpResponse, HttpResponseRedirect
-from iam.models import *
-from iam.forms import *
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
-from .forms import CreatePolicyForm
 
 
 def home(request):

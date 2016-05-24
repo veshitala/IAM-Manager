@@ -1,83 +1,162 @@
 {% extends "base.html" %}
 {% load iam_custom_tags %}
+{% block breadcrumb %}
+<section class="row mar_lr">
+    <ol class="breadcrumb">
+      <li><a href="/">Home</a></li>
+      <li><a href="{% url 'iam_users_list' %}">Users</a></li>
+      <li>{{response.UserName}}</li>
+    </ol>
+</section>
+{% endblock%}
 {% block base %}
-<div class="container_block mar_auto user_det_top settings">
-      <div class="row">
-        <div>
-          <div class="panel panel-info user_detail">
-            <div class="panel-heading">
-              <h3 class="panel-title">{{response.UserName}}</h3>
-            </div>
-            <div class="panel-body">
-              <div class="row">
-              <div class="table-responsive">
-                  <table class="table table-user-information iam_detail_table">
-                    <tbody>
-                      <tr>
-                        <td>UserName:</td>
-                        <td>{{response.UserName}}</td>
-                      </tr>
-                      <tr>
-                        <td>Created Date:</td>
-                        <td>{{response.CreateDate}}</td>
-                      </tr>
-                      <tr>
-                        <td>Password</td>
-                        <td><span><a class="attach_policy" href="{% url 'iam_user_change_password' user_name %}">Change Password</a></span></td>
-                      </tr>
-                             <tr>
-                        <td>User ARN</td>
-                        <td>{{response.Arn}}</td>
-                      </tr>
-                        <tr>
-                        <td>Accesskey</td>
-                        <td>{% if user_access_keys %}{% for user_access_key in user_access_keys %}{% if user_access_key.AccessKeyId %}{{ user_access_key.AccessKeyId }}{% endif %}{% endfor %}{% else %}<span><a class="attach_policy" href="{% url 'iam_user_detail' user_name %}?generate_keys=True">Generate Keys</a></span>{% endif %}</td>
-                      </tr>
-                      <tr>
-                        <td>Status</td>
-                        <td>{% if user_access_keys %}{% for user_access_key in user_access_keys %}{% if user_access_key.Status %}Active{% endif %}{% endfor %}{% else %}InActive{% endif %}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Policies</td>
-                        <td><span><a class="attach_policy" href="{% url 'policies_list' user_name %}">Attach Policy</a></span><br>
-                        <span>
-                        {% if user_policies %}
-                        <table class="table table-hover table-bordered user-policy-list" id="dev-table">
-            <thead>
-              <tr>
-              <td>Policy Name</td>
-              <td>Policy ARN</td>
-              <td align="center">Actions</td>
-              </tr>
-              </thead>
-              <tbody>
-                          {% for p in user_policies %}
+<section class="main_container row mar_lr">
+      <div class="col-md-12 form_container">
+        <div class="panel panel-default user_list_panel">
+          <div class="panel-heading">
+            <h3 class="panel-title">{{response.UserName}}</h3>
+          </div>
+          <div class="panel-body">
+            <div class="row ">
+            <div class="profile_details">
+              <div class="col-md-3">
+              <div class="profile_block">
+                <strong>Username :</strong>
+                <span>{{response.UserName}}</span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Created date :</strong>
+                <span>{{response.CreateDate}}</span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Password :</strong>
+                <span><a href="{% url 'iam_user_change_password' user_name %}">Change password</a></span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>User ARN :</strong>
+                <span>{{response.Arn}}</span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Access Key :</strong>
+                <span>{% if user_access_keys %}{% for user_access_key in user_access_keys %}{% if user_access_key.AccessKeyId %}{{ user_access_key.AccessKeyId }}{% endif %}{% endfor %}{% else %}<span><a class="attach_policy generate_keys" data-toggle="modal" data-target="#myModal" href="#">Generate Keys</a></span>{% endif %}</span>
+              </div>
+              </div>
+              <div id="myModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
 
-              <tr>
-                          <td>{{ p.PolicyName }}</td>
-
-                          <td>{{ p.PolicyArn }}</td>
-                          <td class="actions" align="center"><a href="{% url 'detach_user_policies' user_name %}?policy_arn={{p.PolicyArn}}"><i class="fa fa-trash"></i></a></td>
-                        </tr>
-                          {% endfor %}
-
-                        </tbody>
-                        </table>
-                        {% endif %}
-                        </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <!-- Modal content-->
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">&times;</button>
+                      <h4 class="modal-title">IAM User Credentials</h4>
+                    </div>
+                    <form role="form" class="form_block" action="{% url "iam_user_details_download" %}" id="download_iam_users" method="post">
+                      {% csrf_token %}
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <input type="text" class="form-control" id="download_username" value="" placeholder="UserName" name="download_username">
+                      </div>
+                      <div class="form-group">
+                        <input type="text" class="form-control" id="download_access_key" value="" placeholder="Access Key" name="download_access_key">
+                      </div>
+                      <div class="form-group">
+                        <input type="text" class="form-control" id="download_secret_key" value="" placeholder="Secret Key" name="download_secret_key">
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-default download_credentials save">Download</button>
+                        <button type="submit" class="btn btn-default next_button cancel">Next</button>
+                    </div>
+                    </form>
                   </div>
-                  
+
+                </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Status :</strong>
+                 <span>{% if user_access_keys %}{% for user_access_key in user_access_keys %}{% if user_access_key.Status %}Active{% endif %}{% endfor %}{% else %}InActive{% endif %}</span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Policies :</strong>
+                <span><a href="{% url 'policies_list' user_name %}">Attach Policy</a></span>
+              </div>
               </div>
             </div>
-                
-            
+            </div>
+            <br clear="all">
+            {% if user_policies %}
+             <div class="row mar_lr user_policy_table">
+              <div class="table-responsive">
+                <table class="table table-hover table-bordered user-policy-list iam-list" id="dev-table">
+                    <thead>
+                      <tr>
+                        <th>Policy Name</th>
+                        <th>Policy ARN</th>
+                        <th align="center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for p in user_policies %}
+                      <tr>
+                        <td>{{ p.PolicyName }}</td>
+                        <td>{{ p.PolicyArn }}</td>
+                        <td class="actions" align="center"><a data-href="{% url 'detach_user_policies' user_name %}?policy_arn={{p.PolicyArn}}" class="delete delete_confirmation"><i class="fa fa-trash"></i></a></td>
+                      </tr>
+                      {% endfor %}
+                      
+                    </tbody>
+                  </table>
+              </div>
+            </div>
+            {% endif %}
           </div>
         </div>
       </div>
-    </div>
-    {% endblock%}
+    </section>
+{% endblock%}
+{% block extra_js %}
+<script type="text/javascript">
+is_downloaded = false
+$(".next_button").click(function(e){
+  e.preventDefault();
+  if (is_downloaded){
+    window.location = "{% url 'iam_user_detail' user_name %}";
+  }
+  else{
+    if(confirm("You want to Continue without downloading ?")){
+       window.location = "{% url 'iam_user_detail' user_name %}";
+      }
+    else{
+        return
+      }
+  }
+})
+$(".generate_keys").click(function(e){
+  $.get("{% url 'iam_user_detail' user_name %}?generate_keys=True", function(data){
+    if (data.iam_access_key && data.iam_secret_key){
+              $("#download_username").val(data.iam_username)
+              $("#download_access_key").val(data.iam_access_key)
+              $("#download_secret_key").val(data.iam_secret_key)
+            }
+            else{
+              window.location = '{% url "iam_user_detail" user_name %}'
+            }
+  }, 'json')
+});
+$(".download_credentials").click(function(e){
+  is_downloaded = true
+  $("#download_iam_users").submit();
+})
+</script>
+{% endblock %}

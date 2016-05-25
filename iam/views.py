@@ -177,14 +177,14 @@ def generate_custom_policy(request, user_name):
                 action = dict["aws_service"].split(":")[0]+':'+str(a)
                 l.append(action)
             text = {}
-            text['Effect'] = "Allow"
+            text['Effect'] = "Deny"
             text['Action'] = l
             if dict["aws_service"] == "s3":
-                text['Resource'] = "arn:aws:s3:::"+dict["service_type"]
+                text['Resource'] = "arn:aws:s3:::"+dict["service_type"]+"/*"
                 statement.append(text)
 
             elif dict["aws_service"] == "ec2":
-                text['Resource'] = "arn:aws:ec2:"+request.POST.get("region")+"::"+dict["service_type"]
+                text['Resource'] = "arn:aws:ec2:"+request.POST.get("region")+"::"+dict["service_type"]+"/*"
                 statement.append(text)
         policy_document = '{"Version": "2012-10-17","Statement": ['+str(json.dumps(statement)).strip("[]")+']}'
         policy_document = policy_document.replace("'", '"')

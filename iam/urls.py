@@ -24,6 +24,8 @@ urlpatterns = [
 
     # EC2 Instances
     url(r'^ec2-instances/list/$', ec2_instances_list, name="ec2_instances_list"),
+    url(r'^ec2-instances/detail/(?P<instance_id>[a-zA-Z0-9_-]+)/(?P<region_name>[a-zA-Z0-9_-]+)/$', instance_detail, name="instance_detail"),
+    url(r'^ec2-instances/change-status/(?P<instance_id>[a-zA-Z0-9_-]+)/(?P<region_name>[a-zA-Z0-9_-]+)/$', change_instance_status, name="change_instance_status"),
 
     # S3 Buckets
     url(r'^s3-buckets/list/$', s3_buckets_list, name="s3_buckets_list"),

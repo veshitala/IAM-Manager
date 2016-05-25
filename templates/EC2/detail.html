@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block breadcrumb %}
+<section class="row mar_lr">
+    <ol class="breadcrumb">
+      <li><a href="/">Home</a></li>
+      <li><a href="{% url 'ec2_instances_list' %}">{{region_name}}</a></li>
+      {% for instance in response_instance %}
+      {% for i in instance.Instances %}
+      <li>{{i.KeyName}}</li>
+      {% endfor %}
+            {% endfor %}
+    </ol>
+</section>
+{% endblock%}
+{% block base %}
+<section class="main_container row mar_lr">
+      <div class="col-md-12 form_container">
+        <div class="panel panel-default user_list_panel">
+        {% for instance in response_instance %}
+      {% for i in instance.Instances %}
+          <div class="panel-heading">
+            <h3 class="panel-title">{{i.KeyName}}</h3>
+          </div>
+          <div class="panel-body">
+            <div class="row ">
+            <div class="profile_details">
+              <div class="col-md-3">
+              <div class="profile_block">
+                <strong>Instance :</strong>
+                <span>{{i.KeyName}}</span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Instance ID :</strong>
+                <span>{{i.InstanceId}}</span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Instance type :</strong>
+                <span>{{i.State.Name|capfirst}}</span>
+              </div>
+              </div>
+              <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Owner :</strong>
+                <span>{{instance.OwnerId }}
+                </span>
+              </div>
+              </div>
+              <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Launch time :</strong>
+                <span>{{i.LaunchTime }}
+                </span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Private DNS :</strong>
+                <span>{% for j in i.NetworkInterfaces%}{% for k in j.PrivateIpAddresses %}{{k.PrivateDnsName }}{% endfor %}{% endfor %}</span>
+              </div>
+              </div>
+               <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Private IP :</strong>
+                <span>{% for j in i.NetworkInterfaces%}{% for k in j.PrivateIpAddresses %}{{k.PrivateIpAddress }}{% endfor %}{% endfor %}</span>
+              </div>
+              </div>
+              
+              <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>VpcId :</strong>
+                <span>{{i.VpcId }}</span>
+              </div>
+              </div>
+              <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>SubnetId :</strong>
+                <span>{{i.SubnetId }}</span>
+              </div>
+              </div>
+              <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>Availability Zone :</strong>
+                <span>{{i.Placement.AvailabilityZone }}</span>
+              </div>
+              </div>
+              <div class="col-md-3">
+              <div class="profile_block ">
+                <strong>SecurityGroups :</strong>
+                <span>{% for j in i.SecurityGroups %}{{j.GroupName }}{% endfor %}</span>
+              </div>
+              </div>
+            </div>
+            </div>
+           
+          </div>
+          {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+{% endblock%}

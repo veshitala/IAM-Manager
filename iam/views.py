@@ -450,12 +450,13 @@ def ec2_instances_list(request):
     Connecting to boto3 IAM client,Lists all EC2 Instances.
     '''
     client_ec2 = boto3.client(
-       'ec2', region_name="us-west-2",
+       'ec2', region_name=request.POST.get("region") if request.POST.get("region") else "us-west-2",
        aws_access_key_id=request.session["access_key"],
        aws_secret_access_key=request.session["secret_key"]
     )
     response_instances = client_ec2.describe_instances()
-    return render(request, "EC2/instances.html", {"instances": response_instances['Reservations']})
+    return render(request, "EC2/instances.html", {"instances": response_instances['Reservations'],
+                                                  "region": request.POST.get("region") if request.POST.get("region") else "us-west-2"})
 
 
 def s3_buckets_list(request):
@@ -510,3 +511,49 @@ def send_email(request, region_name=None):
         return HttpResponse(json.dumps(data), content_type='application/json')
 
     return HttpResponseRedirect('/')
+
+
+def instance_detail(request, instance_id, region_name):
+    '''
+    Authored by:Swetha
+    Other Modules Involved:
+    Tasks Involved:EC2 Instances detail
+    Description:when user hits the url "^ec2-instances/detail/<instance_id>/<region_name>/$" this function is called
+    First this function renders to 'EC2/detail' template,
+    Connecting to boto3 IAM client,displays the detailed information of specific Instance.
+    '''
+    client = boto3.client(
+       'ec2', region_name=region_name if region_name else "us-west-2",
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
+    )
+    response_instance = client.describe_instances(InstanceIds=[instance_id])
+    return render(request, "EC2/detail.html", {"region_name": region_name, "response_instance": response_instance['Reservations']})
+
+
+def change_instance_status(request, instance_id, region_name):
+    '''
+    Authored by:Swetha
+    Other Modules Involved:
+    Tasks Involved:EC2 Instances detail
+    Description:when user hits the url "^ec2-instances/change-status/<instance_id>/<region_name>/$" this function is called
+    Connecting to boto3 IAM client,changes the status of specific instances(start, stop, terminate).
+    '''
+    client = boto3.client(
+       'ec2', region_name=region_name if region_name else "us-west-2",
+       aws_access_key_id=request.session["access_key"],
+       aws_secret_access_key=request.session["secret_key"]
+    )
+    if request.GET.get("action") == "start":
+        response = client.start_instances(
+            InstanceIds=[instance_id]
+        )
+    elif request.GET.get("action") == "stop":
+        response = client.stop_instances(
+            InstanceIds=[instance_id]
+        )
+    elif request.GET.get("action") == "terminate":
+        response = client.terminate_instances(
+            InstanceIds=[instance_id]
+        )
+    return HttpResponseRedirect(reverse("ec2_instances_list"))

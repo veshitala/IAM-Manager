@@ -201,8 +201,10 @@ buckets_list.push(buckets_dict)
   $(".js-example-basic-multiple").select2();
   
   actions_list = []
-  s3_actions = ["CreateBucket", "DeleteBucket", "GetObject", "ListBucket", "DeleteObject"]
-  ec2_actions = ["DeleteKeyPair", "CreateKeyPair", "CopyImage", "CreateImage"]
+  s3_actions = ["CreateBucket", "DeleteBucket", "GetObject", "ListBucket", "DeleteObject", "PutObject", "ListAllMyBuckets", "RestoreObject", "ReplicateObject", "AbortMultipartUpload", "DeleteBucketPolicy", "DeleteBucketWebsite", "DeleteObjectVersion", "GetAccelerateConfiguration", "GetBucketAcl", "GetBucketCORS", "GetBucketLocation", "GetBucketLogging", "GetBucketNotification", "GetBucketRequestPayment", "GetBucketTagging", "GetBucketVersioning", "GetBucketWebsite", "GetLifecycleConfiguration","GetLifecycleConfiguration", "GetObjectAcl", "GetObjectTorrent", "GetObjectVersion", "GetObjectVersionAcl", "GetReplicationConfiguration", "ListBucketMultipartUploads", "ListBucketVersions", "ListMultipartUploadParts", "PutAccelerateConfiguration", "PutBucketAcl", "PutBucketCORS", "PutBucketLogging", "PutBucketNotification", "PutBucketPolicy", "PutBucketRequestPayment", "PutBucketTagging", "PutBucketVersioning", "PutBucketWebsite","PutLifecycleConfiguration", "PutReplicationConfiguration", "PutObjectAcl", "PutObjectVersionAcl", "ReplicateDelete"]
+
+ec2_actions = ["AcceptVpcPeeringConnection", "AllocateAddress", "AssignPrivateIpAddresses", "AssociateAddress", "AssociateDhcpOptions", "AssociateRouteTable", "AttachClassicLinkVpc", "AttachInternetGateway", "AttachNetworkInterface", "AttachVolume", "AttachVpnGateway", "AuthorizeSecurityGroupEgress", "AuthorizeSecurityGroupIngress", "BundleInstance", "CancelBundleTask", "CancelConversionTask", "CancelExportTask", "CancelImportTask", "CancelReservedInstancesListing", "CancelSpotFleetRequests","CancelSpotInstanceRequests", "ConfirmProductInstance", "CopyImage", "CopySnapshot", "CreateCustomerGateway", "CreateDhcpOptions", "CreateFlowLogs", "CreateImage", "CreateInstanceExportTask", "CreateInternetGateway", "CreateKeyPair", "CreateNatGateway", "CreateNetworkAcl", "CreateNetworkAclEntry", "CreateNetworkInterface", "CreatePlacementGroup", "CreateReservedInstancesListing", "CreateRoute", "CreateRouteTable", "CreateSecurityGroup", "CreateSnapshot","CreateSpotDatafeedSubscription", "CreateSubnet", "CreateTags", "CreateVolume", "CreateVpc", "CreateVpcEndpoint", "CreateVpcPeeringConnection", "CreateVpnConnection", "CreateVpnConnectionRoute", "CreateVpnGateway", "DeleteCustomerGateway", "DeleteDhcpOptions", "DeleteFlowLogs", "DeleteInternetGateway", "DeleteKeyPair", "DeleteNatGateway", "DeleteNetworkAcl", "DeleteNetworkAclEntry", "DeleteNetworkInterface", "DeletePlacementGroup", "DeleteRoute", "DeleteRouteTable","DeleteSecurityGroup", "DeleteSnapshot", "DeleteSpotDatafeedSubscription", "DeleteSubnet", "DeleteTags", "DeleteVolume", "DeleteVpc", "DeleteVpcEndpoints", "DeleteVpcPeeringConnection", "DeleteVpnConnection", "DeleteVpnConnectionRoute", "DeleteVpnGateway"]
+
   $(s3_actions).each(function(e, item){
   actions = {}
   actions['class'] = "s3"
@@ -347,6 +349,9 @@ buckets_list.push(buckets_dict)
     if(files_data.length){
     $.post('{% url "generate_custom_policy" user_name %}', {'policy_document':JSON.stringify(files_data), 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val(), "policy_name": $("#custom_policy_form").find("input[name='policy_name']").val(), "show_policy":$("#custom_policy_form").find("input[name='show_policy']").val(), "region":$("#custom_policy_form").find("select[name='region']").val()}, function(data) {
     $(".policy_doc").html(JSON.stringify(data.policy_document, null, "\t"))
+        if ($(".policy_doc").text()){
+          $(".show_policy_document").show()
+      }
     if(data.error){
       $('p.failure').remove();
       if(data.exception_error){
@@ -364,8 +369,10 @@ buckets_list.push(buckets_dict)
   $(".show_policy").click(function(e){
     e.preventDefault();
   $("input[name='show_policy']").val("show")
-  $(".show_policy_document").show()
   $("#custom_policy_form").submit();
+  if ($(".policy_doc").text()){
+      $(".show_policy_document").show()
+  }
   })
   
   $(".generate_policy").click(function(e){

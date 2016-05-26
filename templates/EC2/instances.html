@@ -18,15 +18,9 @@
           <h3 class="panel-title">EC2 Instances
             <span class="pull-right region_select">
             <select class="form-control" data-placeholder="Region" id="region" name="region">
-            <option value="us-west-2" {% ifequal region "us-west-2" %}selected{% endifequal %}>US West (Oregon)</option>
-            <option value="us-east-1" {% ifequal region "us-east-1" %}selected{% endifequal %}>US East (N. Virginia)</option>
-            <option value="us-west-1" {% ifequal region "us-west-1" %}selected{% endifequal %}>US West (N. California)</option>
-            <option value="eu-west-1" {% ifequal region "eu-west-1" %}selected{% endifequal %}>EU (Ireland)</option>
-            <option value="eu-central-1" {% ifequal region "eu-central-1" %}selected{% endifequal %}>EU (Frankfurt)</option>
-            <option value="ap-southeast-1" {% ifequal region "ap-southeast-1" %}selected{% endifequal %}>Asia Pacific (Singapore)</option>
-            <option value="ap-southeast-2" {% ifequal region "ap-southeast-2" %}selected{% endifequal %}>Asia Pacific (Sydney)</option>
-            <option value="ap-northeast-1" {% ifequal region "ap-northeast-1" %}selected{% endifequal %}>Asia Pacific (Tokyo)</option>
-            <option value="sa-east-1" {% ifequal region "sa-east-1" %}selected{% endifequal %}>South America (São Paulo)</option>
+            {% for k,v in regions %}
+              <option value="{{k}}" {% ifequal region k %}selected{% endifequal %}>{{v}}</option>
+            {% endfor %}
             </select>
             </span>
           </h3>
@@ -52,14 +46,14 @@
                 <td>{{i.State.Name|capfirst}}</td>
                 <td>{{ i.LaunchTime }}</td>
                 <td class="actions text-center">
-                  {% if not i.State.Name == "running" %}
-                  <a href="{% url 'change_instance_status' i.InstanceId region %}?action=start" class="start" data-toggle="tooltip" data-placement="top" title="Start Instance"><i class="fa fa-play"></i></a>
+                  {% if i.State.Name == "stopped" or i.State.Name == "stopping" %}
+                  <a data-href="{% url 'change_instance_status' i.InstanceId region %}?action=start" class="start confirmation" data-toggle="tooltip" data-placement="top" title="Start Instance"><i class="fa fa-play"></i></a>
                   {% endif %}
-                  {% if not i.State.Name == "stopped" %}
-                  <a href="{% url 'change_instance_status' i.InstanceId region %}?action=stop" class="stop"  data-toggle="tooltip" data-placement="top" title="Stop Instance"><i class="fa fa-stop"></i></a>
+                  {% if i.State.Name == "running" or i.State.Name == "pending" %}
+                  <a data-href="{% url 'change_instance_status' i.InstanceId region %}?action=stop" class="stop confirmation"  data-toggle="tooltip" data-placement="top" title="Stop Instance"><i class="fa fa-stop"></i></a>
                   {% endif %}
-                  {% if i.State.Name == "stopped" or i.State.Name == "running"  %}
-                  <a href="{% url 'change_instance_status' i.InstanceId region  %}?action=terminate" class="terminate"  data-toggle="tooltip" data-placement="top" title="Terminate Instance"><i class="fa fa-times"></i></a>
+                  {% if i.State.Name == "stopped" or i.State.Name == "running" or i.State.Name == "stopping" or i.State.Name == "pending" %}
+                  <a data-href="{% url 'change_instance_status' i.InstanceId region  %}?action=terminate" class="terminate confirmation"  data-toggle="tooltip" data-placement="top" title="Terminate Instance"><i class="fa fa-times"></i></a>
                   {% endif %}
                 </td>
                 <td class="actions" align="center"><a href="{% url 'instance_detail' i.InstanceId region %}"><i class="fa fa-eye"></i></a>
@@ -87,5 +81,15 @@
   $(function () {
     $('[data-toggle="tooltip"]').tooltip()
   });
+
+  $(".confirmation").click(function(e){
+        e.preventDefault();
+        if(confirm("You want to Change the status of Instance")){
+          window.location = $(this).attr("data-href")
+        }
+        else{
+          return
+        }
+      })
 </script>
 {% endblock %}

@@ -29,7 +29,8 @@ urlpatterns = [
 
     # S3 Buckets
     url(r'^s3-buckets/list/$', s3_buckets_list, name="s3_buckets_list"),
-       
+    url(r'^s3-buckets/create/$', create_s3_bucket, name="create_s3_bucket"),
+    url(r'^s3-buckets/delete/(?P<bucket_name>[a-zA-Z0-9_-]+)/$', delete_bucket, name="delete_bucket"),
     # ses
     url(r'ses/send-email/(?P<region_name>[^/]*)/$', send_email, name='send_email'),
 

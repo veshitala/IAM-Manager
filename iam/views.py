@@ -9,6 +9,8 @@ from django.contrib.auth import logout
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
+from iam.models import REGIONS
+from iam.forms import BucketForm
 
 
 def home(request):
@@ -207,7 +209,7 @@ def generate_custom_policy(request, user_name):
                 data = {'error': True, 'exception_error': str(e)}
                 return HttpResponse(json.dumps(data))
     else:
-        return render(request, "policies.html", {"user_name": user_name, "response_buckets": response_buckets["Buckets"],
+        return render(request, "policies.html", {"regions": REGIONS, "user_name": user_name, "response_buckets": response_buckets["Buckets"],
                                                  "response_instances": response_instances["Reservations"],
                                                  "user_policies": user_policies["AttachedPolicies"], "response": response["Policies"]})
 
@@ -371,7 +373,7 @@ def policies_list(request, user_name):
             data = {'error': False, "response_instances": l}
             return HttpResponse(json.dumps(data))
     else:
-        return render(request, "policies.html", {"user_policies": user_policies["AttachedPolicies"], "response": response["Policies"], "user_name": user_name, "response_buckets": response_buckets["Buckets"], "response_instances": response_instances["Reservations"]})
+        return render(request, "policies.html", {"regions": REGIONS, "user_policies": user_policies["AttachedPolicies"], "response": response["Policies"], "user_name": user_name, "response_buckets": response_buckets["Buckets"], "response_instances": response_instances["Reservations"]})
 
 
 def detach_user_policies(request, user_name):
@@ -410,34 +412,46 @@ def delete_iam_user(request, user_name):
        aws_access_key_id=request.session["access_key"],
        aws_secret_access_key=request.session["secret_key"]
     )
-    iam_user = client.get_user(UserName=user_name)
-    user_access_keys = client.list_access_keys(
-        UserName=iam_user["User"]["UserName"],
-    )
-    if user_access_keys["AccessKeyMetadata"]:
-        for key in user_access_keys["AccessKeyMetadata"]:
-            delete_access_keys = client.delete_access_key(
-                UserName=user_name,
-                AccessKeyId=key["AccessKeyId"]
-            )
-    attached_policies = client.list_attached_user_policies(
-        UserName=user_name,
-    )
-    for policy in attached_policies["AttachedPolicies"]:
-        client.detach_user_policy(
-            UserName=user_name,
-            PolicyArn=policy["PolicyArn"]
-        )
-    try:
-        s = client.delete_login_profile(
-            UserName=user_name
-        )
-    except:
-        pass
-    response = client.delete_user(
-        UserName=user_name
-    )
-    return HttpResponseRedirect(reverse("iam_users_list"))
+    if request.method == "POST":
+        if request.POST.get("iam_user_name"):
+            if request.POST.get("iam_user_name") == user_name:
+                iam_user = client.get_user(UserName=user_name)
+                user_access_keys = client.list_access_keys(
+                    UserName=iam_user["User"]["UserName"],
+                )
+                if user_access_keys["AccessKeyMetadata"]:
+                    for key in user_access_keys["AccessKeyMetadata"]:
+                        delete_access_keys = client.delete_access_key(
+                            UserName=user_name,
+                            AccessKeyId=key["AccessKeyId"]
+                        )
+                attached_policies = client.list_attached_user_policies(
+                    UserName=user_name,
+                )
+                for policy in attached_policies["AttachedPolicies"]:
+                    client.detach_user_policy(
+                        UserName=user_name,
+                        PolicyArn=policy["PolicyArn"]
+                    )
+                try:
+                    s = client.delete_login_profile(
+                        UserName=user_name
+                    )
+                except:
+                    pass
+                response = client.delete_user(
+                    UserName=user_name
+                )
+                data = {'error': False}
+                return HttpResponse(json.dumps(data))
+            else:
+                data = {'error': True, 'message': "Please Check the user name"}
+                return HttpResponse(json.dumps(data))
+        else:
+            data = {'error': True, 'message': "This field is required"}
+            return HttpResponse(json.dumps(data))
+    else:
+        return HttpResponseRedirect(reverse("iam_users_list"))
 
 
 def ec2_instances_list(request):
@@ -455,7 +469,7 @@ def ec2_instances_list(request):
        aws_secret_access_key=request.session["secret_key"]
     )
     response_instances = client_ec2.describe_instances()
-    return render(request, "EC2/instances.html", {"instances": response_instances['Reservations'],
+    return render(request, "EC2/instances.html", {"regions": REGIONS, "instances": response_instances['Reservations'],
                                                   "region": request.POST.get("region") if request.POST.get("region") else "us-west-2"})
 
 
@@ -474,7 +488,7 @@ def s3_buckets_list(request):
         aws_secret_access_key=request.session["secret_key"])
 
     response_buckets = client_s3.list_buckets()
-    return render(request, "S3/buckets.html", {"buckets": response_buckets["Buckets"]})
+    return render(request, "S3/buckets.html", {"regions": REGIONS, "buckets": response_buckets["Buckets"]})
 
 
 def send_email(request, region_name=None):
@@ -557,3 +571,58 @@ def change_instance_status(request, instance_id, region_name):
             InstanceIds=[instance_id]
         )
     return HttpResponseRedirect(reverse("ec2_instances_list"))
+
+
+def create_s3_bucket(request):
+    if request.method == "POST":
+        client_s3 = boto3.client(
+            's3',
+            aws_access_key_id=request.session["access_key"],
+            aws_secret_access_key=request.session["secret_key"])
+        form = BucketForm(request.POST)
+        print (form.is_valid)
+        if form.is_valid():
+            print (request.POST.get("region_name"))
+            try:
+                response = client_s3.create_bucket(
+                    Bucket=request.POST.get("bucket_name"),
+                    CreateBucketConfiguration={'LocationConstraint': request.POST.get("region_name")},
+                )
+                print (response)
+                data = {'error': False}
+                return HttpResponse(json.dumps(data))
+            except Exception as e:
+                data = {'error': True, 'message': str(e)}
+                return HttpResponse(json.dumps(data))
+        else:
+            print (form.errors)
+            data = {'error': True, 'response': form.errors}
+            return HttpResponse(json.dumps(data))
+    else:
+        return HttpResponseRedirect(reverse('s3_buckets_list'))
+
+
+def delete_bucket(request, bucket_name):
+    client_s3 = boto3.client(
+            's3',
+            aws_access_key_id=request.session["access_key"],
+            aws_secret_access_key=request.session["secret_key"])
+    if request.method == "POST":
+        if request.POST.get("s3_bucket_name"):
+            if request.POST.get("s3_bucket_name") == bucket_name:
+                try:
+                    response = client_s3.delete_bucket(
+                        Bucket=bucket_name
+                    )
+                    data = {'error': False}
+                except Exception as e:
+                    data = {'error': True, 'message': str(e)}
+                return HttpResponse(json.dumps(data))
+            else:
+                data = {'error': True, 'message': "Please Check your bucket name"}
+                return HttpResponse(json.dumps(data))
+        else:
+            data = {'error': True, 'message': "This field is required"}
+            return HttpResponse(json.dumps(data))
+    else:
+        return HttpResponseRedirect(reverse("s3_buckets_list"))

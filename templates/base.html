@@ -32,9 +32,12 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
-            <li class="active"><a class="link1" href="{% url 'ec2_instances_list' %}">EC2</a></li>
+            <li><a class="link1" href="{% url 'ec2_instances_list' %}">EC2</a></li>
             <li><a class="link2" href="{% url 's3_buckets_list' %}">S3</a></li>
             <li><a class="link3" href="{% url 'iam_users_list' %}">Users</a></li>
+            <li><a class="link4" href="#">SNS</a></li>
+            <li><a class="link5" href="{% url 'emails_list' %}">SES</a></li>
+            <li><a class="link6" href="#">CloudFront</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>
@@ -66,7 +69,18 @@
           return
         }
       })
-    </script>
+      $ = jQuery
+      $(document).ready(function(){
+        var pathname = window.location.pathname;
+        ul = $('.navbar-collapse').children()[0]
+        li = $(ul).children()
+        $.each($(li), function(i, field){ 
+          if(pathname == $(this).children().attr('href')){
+            $(this).addClass("active")
+          }
+        });
+     });
+</script>
     {% block extra_js %}
     {% endblock %}
   </body>

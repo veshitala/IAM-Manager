@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load iam_custom_tags %}
+{% block breadcrumb %}
+<section class="row mar_lr">
+  <ol class="breadcrumb">
+    <li><a href="/">Home</a></li>
+    <li><a class="active" href="#">Email-Addresses</a></li>
+  </ol>
+</section>
+{% endblock %}
+{% block base %}
+<section class="main_container row mar_lr">
+  <div class="col-md-offset-1 col-md-10 col-md-offset-1 form_container">
+    <div class="panel panel-default user_list_panel">
+      <form method="post" id="email_adresses_form" action="{% url 'emails_list' %}">
+        {% csrf_token %}
+        <div class="panel-heading">
+          <h3 class="panel-title">Emails
+           <span class="add_btn pull-right" data-toggle="modal" data-target="#myModal"><a href="#"><i class="fa fa-plus"></i></a></span>
+            <span class="pull-right region_select email_adresses">
+            <select class="form-control" data-placeholder="Region" id="region" name="region">
+            {% for k,v in regions %}
+            {% if k == "us-west-2" or k == "us-east-1" or k == "eu-west-1" %}
+              <option value="{{k}}" {% ifequal selected_region k %}selected{% endifequal %}>{{v}}</option>
+            {% endif %}
+            {% endfor %}
+            </select>
+            </span>
+          </h3>
+        </div>
+        <div class="panel-body">
+          {% if verified_email_addresses %}
+          <table class="table table-hover table-bordered iam-list" id="dev-table">
+            <thead>
+              <tr>
+                <th class="text-center" width="50%">Verified Sender: Email</th>
+                <th class="text-center" width="50%">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for email in verified_email_addresses %}
+              <tr>
+                <td class="text-center" width="50%">{{ email }}</td>
+                <td class="text-center" width="50%">Verified</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="text-center no_policies">No Verified Email Addresses Available in this region.</p>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+   <div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog form_container">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Verify a New Email Adress</h4>
+        </div>
+        <form role="form" class="form_block" id="new_bucket_form" method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="form-group">
+              <input type="email" class="form-control" value="" placeholder="Email" name="email" id="email">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-default next_button save">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script type="text/javascript">
+  $("#region").change(function(e){
+  	$("#email_adresses_form").submit()
+  });
+
+  $('.next_button').click(function(e) {
+   $.post('{% url "add_new_email_adress" selected_region %}', $('#new_bucket_form').serialize(), function(data) {
+     if (data.error){
+       $("p.error").remove();
+       for (var key in data.response) {
+     $('#' + key).after('<p class="error">' + data.response[key] + '</p>');
+   }
+     if (data.message){
+      $('#region_name').after('<p class="error">' + data.message + '</p>');
+     }
+     }
+     else{
+       window.location = '{% url "s3_buckets_list" %}'
+     }
+   },"json");
+ });
+</script>
+{% endblock %}

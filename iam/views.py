@@ -10,7 +10,7 @@ from django.http.response import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
 from iam.models import REGIONS
-from iam.forms import BucketForm
+from iam.forms import BucketForm, ChangePasswordForm
 
 
 def home(request):
@@ -108,11 +108,12 @@ def add_iam_user(request):
                             try:
                                 response_without_keys = client.create_user(Path="/", UserName=request.POST.get("username"))
                             
-                                # client.create_login_profile(
-                                #     UserName=response_without_keys["User"]["UserName"],
-                                #     Password=request.POST.get("password"),
-                                #     PasswordResetRequired=False
-                                # )
+                                client.create_login_profile(
+                                    UserName=request.POST.get("username"),
+                                    Password=request.POST.get("password"),
+                                    PasswordResetRequired=False
+                                )
+
                             except ClientError as e:
                                 data = {"error": True, "response": str(e)}
                                 return HttpResponse(json.dumps(data))
@@ -298,26 +299,45 @@ def iam_user_change_password(request, user_name):
        aws_secret_access_key=request.session["secret_key"]
     )
     if request.method == 'POST':
-        if request.POST.get("new_pwd") and request.POST.get("confirm_pwd"):
-            if request.POST.get("new_pwd") != request.POST.get("confirm_pwd"):
-                data = {"error": True, 'response': "Confirm Password should match with Password."}
+        form = ChangePasswordForm(request.POST)
+        if form.is_valid():
+            if request.POST.get("new_password") != request.POST.get("confirm_password"):
+                data = {"error": True, 'message': "Confirm Password should match with New Password."}
                 return HttpResponse(json.dumps(data))
-            elif request.POST.get("new_pwd") == request.POST.get("confirm_pwd"):
-                try:
-                    client.create_login_profile(
-                        UserName=user_name,
-                        Password=request.POST.get("new_pwd"),
-                        PasswordResetRequired=True
-                    )
-                    data = {"error": False}
-                    return HttpResponse(json.dumps(data))
-                except ClientError as e:
-                    data = {"error": True, "response": str(e)}
-                    return HttpResponse(json.dumps(data))
+            else:
+                if request.POST.get("type") == "change_password":
+                    try:
+                        response = client.update_login_profile(
+                            UserName=user_name,
+                            Password=request.POST.get("new_password"),
+                            PasswordResetRequired=False
+                        )
+                        data = {"error": False}
+                        return HttpResponse(json.dumps(data))
+                    except ClientError as e:
+                        data = {"error": True, "message": str(e)}
+                        return HttpResponse(json.dumps(data))
+                else:
+                    try:
+                        client.create_login_profile(
+                            UserName=user_name,
+                            Password=request.POST.get("new_password"),
+                            PasswordResetRequired=False
+                        )
+                        data = {"error": False}
+                        return HttpResponse(json.dumps(data))
+                    except ClientError as e:
+                        data = {"error": True, "message": str(e)}
+                        return HttpResponse(json.dumps(data))
         else:
-            data = {'error': True, 'response': "Please enter new password and confirm password."}
+            data = {"error": True, "response": form.errors}
             return HttpResponse(json.dumps(data))
-    return render(request, 'iam_user/change_password.html', {"user_name": user_name})
+    try:
+        get_profile = client.get_login_profile(UserName=user_name)
+        get_profile = True
+    except:
+        get_profile = False
+    return render(request, 'iam_user/change_password.html', {"user_name": user_name, "get_profile": get_profile}) 
 
 
 def policies_list(request, user_name):
@@ -580,22 +600,18 @@ def create_s3_bucket(request):
             aws_access_key_id=request.session["access_key"],
             aws_secret_access_key=request.session["secret_key"])
         form = BucketForm(request.POST)
-        print (form.is_valid)
         if form.is_valid():
-            print (request.POST.get("region_name"))
             try:
                 response = client_s3.create_bucket(
                     Bucket=request.POST.get("bucket_name"),
                     CreateBucketConfiguration={'LocationConstraint': request.POST.get("region_name")},
                 )
-                print (response)
                 data = {'error': False}
                 return HttpResponse(json.dumps(data))
             except Exception as e:
                 data = {'error': True, 'message': str(e)}
                 return HttpResponse(json.dumps(data))
         else:
-            print (form.errors)
             data = {'error': True, 'response': form.errors}
             return HttpResponse(json.dumps(data))
     else:

@@ -642,3 +642,36 @@ def delete_bucket(request, bucket_name):
             return HttpResponse(json.dumps(data))
     else:
         return HttpResponseRedirect(reverse("s3_buckets_list"))
+
+
+def emails_list(request):
+    ses_client = boto3.client(
+        'ses',  region_name=request.POST.get("region") if request.POST.get("region") else "us-west-2",
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
+    verified_email_addresses = ses_client.list_verified_email_addresses()
+    return render(request, "ses/email_adresses.html", {"regions": REGIONS, "selected_region": request.POST.get("region") if request.POST.get("region") else "us-west-2",
+                                                       "verified_email_addresses": verified_email_addresses["VerifiedEmailAddresses"]})
+
+
+def add_new_email_adress(request, region_name):
+    ses_client = boto3.client(
+        'ses',  region_name=region_name,
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
+    if request.method == "POST":
+        form = EmailAddressForm(request.POST)
+        if form.is_valid():
+            try:
+                response = ses_client.verify_email_address(
+                        EmailAddress=request.POST.get("email")
+                    )
+            except:
+                pass
+            data = {'error': False}
+            return HttpResponse(json.dumps(data))
+        else:
+            data = {'error': True, "response": form.errors}
+            return HttpResponse(json.dumps(data))
+    else:
+        return HttpResponseRedirect(reverse('emails_list'))

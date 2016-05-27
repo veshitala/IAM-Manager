@@ -337,10 +337,7 @@ def iam_user_change_password(request, user_name):
         get_profile = True
     except:
         get_profile = False
-    if get_profile:
-        return render(request, 'iam_user/change_password.html', {"user_name": user_name, "get_profile": True})
-    else:
-        return render(request, 'iam_user/change_password.html', {"user_name": user_name, "get_profile": False})
+    return render(request, 'iam_user/change_password.html', {"user_name": user_name, "get_profile": get_profile}) 
 
 
 def policies_list(request, user_name):

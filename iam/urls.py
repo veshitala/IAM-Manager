@@ -36,5 +36,6 @@ urlpatterns = [
     url(r'^ses/send-email/(?P<region_name>[^/]*)/$', send_email, name='send_email'),
     url(r'^ses/emails/list/$', emails_list, name='emails_list'),
     url(r'^ses/emails/add/(?P<region_name>[a-zA-Z0-9_-]+)/$', add_new_email_adress, name='add_new_email_adress'),
+    url(r'^ses/emails/delete/(?P<identity>[^/]*)/(?P<region_name>[a-zA-Z0-9_-]+)/$', delete_identity, name='delete_identity'),
 
 ]

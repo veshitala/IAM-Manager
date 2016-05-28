@@ -127,6 +127,15 @@
 {% endblock%}
 {% block extra_js %}
 <script type="text/javascript">
+var pathname = window.location.pathname;
+ul = $('.navbar-collapse').children()[0]
+li = $(ul).children()
+$.each($(li), function(i, field){ 
+  if(pathname == $(this).children().attr('href')){
+    $(this).addClass("active")
+  }
+});
+        
 is_downloaded = false
 $(".next_button").click(function(e){
   e.preventDefault();

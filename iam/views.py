@@ -10,7 +10,7 @@ from django.http.response import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
 from iam.models import REGIONS
-from iam.forms import BucketForm, ChangePasswordForm
+from iam.forms import BucketForm, ChangePasswordForm, EmailAddressForm, SendEmailForm
 
 
 def home(request):
@@ -511,40 +511,39 @@ def s3_buckets_list(request):
     return render(request, "S3/buckets.html", {"regions": REGIONS, "buckets": response_buckets["Buckets"]})
 
 
-def send_email(request, region_name=None):
+def send_email(request, region_name):
+    ses_client = boto3.client('ses', region_name=region_name,
+                              aws_access_key_id=request.session["access_key"],
+                              aws_secret_access_key=request.session["secret_key"])
     if request.method == 'GET':
-        session = boto3.Session(aws_access_key_id=request.session["access_key"], aws_secret_access_key=request.session["secret_key"])
-        ses_client = session.client('ses', region_name=region_name)
+        return render(request, 'ses/send_email.html', {"region_name": region_name, "identity": request.GET.get("identity")})
+    else:
+        form = SendEmailForm(request.POST)
+        if form.is_valid():
+            msg = MIMEMultipart()
+            msg['Subject'] = request.POST['subject']
+            msg['From'] = request.POST['source']
+            msg['To'] = request.POST['destinations']
+            # what a recipient sees if they don't use an email reader
+            msg.preamble = 'Multipart message.\n'
+            part = MIMEText(request.POST['body'])
+            msg.attach(part)
+            if request.FILES.get('attachment'):
+                part = MIMEApplication(request.FILES['attachment'].read())
+                part.add_header('Content-Disposition', 'attachment', filename=request.FILES['attachment'].name)
+                msg.attach(part)
+            try:
+                response = ses_client.send_raw_email(RawMessage={'Data': msg.as_string()}, Source=msg['From'], \
+                                                     Destinations=msg['To'].split(','))
+                data = {'error': False}
+                return HttpResponse(json.dumps(data))
 
-        verified_email_addresses = ses_client.list_verified_email_addresses()['VerifiedEmailAddresses']
-        return render(request, 'ses/send_email.html', {'verified_email_addresses': verified_email_addresses})
-
-    msg = MIMEMultipart()
-    msg['Subject'] = request.POST['subject']
-    msg['From'] = request.POST['source']
-    msg['To'] = request.POST['destinations']
-    
-    # what a recipient sees if they don't use an email reader
-    msg.preamble = 'Multipart message.\n'
-    
-    part = MIMEText(request.POST['body'])
-    msg.attach(part)
-
-    part = MIMEApplication(request.FILES['attachment'].read())
-    part.add_header('Content-Disposition', 'attachment', filename=request.FILES['attachment'].name)
-    msg.attach(part)
-    
-    region_name = request.POST['region_name']
-    session = boto3.Session(aws_access_key_id=request.session['access_key'], aws_secret_access_key=request.session['secret_key'])
-    ses_client = session.client('ses', region_name=region_name)
-    try:
-        response = ses_client.send_raw_email(RawMessage={'Data': msg.as_string()}, Source=msg['From'], \
-                Destinations=msg['To'].split(','))
-    except Exception as e:
-        data = {'error': True, 'response': str(e)}
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    return HttpResponseRedirect('/')
+            except Exception as e:
+                data = {'error': True, 'message': str(e)}
+                return HttpResponse(json.dumps(data), content_type='application/json')
+        else:
+            data = {'error': True, 'response': form.errors}
+            return HttpResponse(json.dumps(data))
 
 
 def instance_detail(request, instance_id, region_name):
@@ -645,13 +644,17 @@ def delete_bucket(request, bucket_name):
 
 
 def emails_list(request):
-    ses_client = boto3.client(
-        'ses',  region_name=request.POST.get("region") if request.POST.get("region") else "us-west-2",
+    ses_client = boto3.client('ses',
+        region_name=request.POST.get("region") if request.POST.get("region") else "us-west-2",
         aws_access_key_id=request.session["access_key"],
         aws_secret_access_key=request.session["secret_key"])
-    verified_email_addresses = ses_client.list_verified_email_addresses()
-    return render(request, "ses/email_adresses.html", {"regions": REGIONS, "selected_region": request.POST.get("region") if request.POST.get("region") else "us-west-2",
-                                                       "verified_email_addresses": verified_email_addresses["VerifiedEmailAddresses"]})
+    response = ses_client.list_identities(IdentityType='EmailAddress')
+    identities = ses_client.get_identity_verification_attributes(
+        Identities=response["Identities"]
+    )
+    return render(request, "ses/email_adresses.html",
+                           {"regions": REGIONS, "response": identities["VerificationAttributes"],
+                            "selected_region": request.POST.get("region") if request.POST.get("region") else "us-west-2"})
 
 
 def add_new_email_adress(request, region_name):
@@ -663,15 +666,40 @@ def add_new_email_adress(request, region_name):
         form = EmailAddressForm(request.POST)
         if form.is_valid():
             try:
-                response = ses_client.verify_email_address(
-                        EmailAddress=request.POST.get("email")
-                    )
-            except:
-                pass
-            data = {'error': False}
-            return HttpResponse(json.dumps(data))
+                response = ses_client.verify_email_address(EmailAddress=request.POST.get("email"))
+                data = {'error': False}
+                return HttpResponse(json.dumps(data))
+            except Exception as e:
+                data = {'error': True, "message": str(e)}
+                return HttpResponse(json.dumps(data))
         else:
             data = {'error': True, "response": form.errors}
             return HttpResponse(json.dumps(data))
     else:
         return HttpResponseRedirect(reverse('emails_list'))
+
+
+def delete_identity(request, identity, region_name):
+    ses_client = boto3.client(
+        'ses',  region_name=region_name,
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
+    if request.method == "POST":
+        if request.POST.get("identity_email"):
+            if request.POST.get("identity_email") == identity:
+                try:
+                    response = ses_client.delete_identity(
+                        Identity=identity
+                    )
+                    data = {'error': False}
+                except Exception as e:
+                    data = {'error': True, 'message': str(e)}
+                return HttpResponse(json.dumps(data))
+            else:
+                data = {'error': True, 'message': "Please Check your Identity"}
+                return HttpResponse(json.dumps(data))
+        else:
+            data = {'error': True, 'message': "This field is required"}
+            return HttpResponse(json.dumps(data))
+    else:
+        return HttpResponseRedirect(reverse("emails_list"))

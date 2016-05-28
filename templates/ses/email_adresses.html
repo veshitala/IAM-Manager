@@ -41,6 +41,7 @@
           <table class="table table-hover table-bordered iam-list" id="dev-table">
             <thead>
               <tr>
+                <th></th>
                 <th class="text-center">Sender: Email</th>
                 <th class="text-center">Status</th>
                 <th class="text-center">Details</th>
@@ -49,6 +50,7 @@
             <tbody>
               {% for key, value in response.items %}
               <tr>
+                <td align="center"><a class="open_table"><i class="fa fa-caret-down"></i></a></td>
                 <td class="text-center">{{ key }}</td>
                 {% for key,value in value.items %}
                 <td class="text-center" {% if value == "Success" %} style="color: #090;"{% else %}style="color: #e47911;" {% endif %}>{{value}}{% endfor%}</td>
@@ -57,6 +59,45 @@
                 <a href="{% url 'send_email' selected_region %}?identity={{key}}" data-toggle="tooltip" data-placement="top" title="Send Email"><i class="fa fa-envelope" aria-hidden="true"></i></a> 
                 <a data-region="{{selected_region}}" data-toggle="modal" data="{{key}}" data-target="#deleteIdentityModal" class="delete delete_identity"><i class="fa fa-trash"></i></a></td>
               </tr>
+              {% for k, v in notifications.items %}
+              <tr  class="content_block">
+                <td colspan="5">
+                   <div class="row mar_lr">
+                      <div class="content_left col-md-6">
+                      {% for notification, val in v.items %}
+                        <ul>
+                          {% if notification == "ForwardingEnabled" %}
+                          <li><strong>Email Feedback Forwarding: </strong>Enabled</li>
+                          {% endif %}
+                          {% if notification == "BounceTopic" %}
+                          <li><strong>Bounce Notifications SNS Topic: </strong>True</li>
+                          {% else %}
+                          <li><strong>Bounce Notifications SNS Topic: </strong>None</li>
+                          {% endif %}
+                        </ul>
+                      {% endfor %}
+                      </div>
+
+                      <div class="content_right col-md-6">
+                      {% for notification, val in v.items %}
+                        <ul>
+                          {% if notification == "DeliveryTopic" %}
+                          <li><strong>Delivery Notifications SNS Topic: </strong>True</li>
+                          {% else %}
+                          <li><strong>Delivery Notifications SNS Topic: </strong>None</li>
+                          {% endif %}
+                          {% if notification == "ComplaintTopic" %}
+                          <li><strong>Complaint Notifications SNS Topic: </strong>True</li>
+                          {% else %}
+                          <li><strong>Complaint Notifications SNS Topic: </strong>None</li>
+                          {% endif %}
+                        </ul>
+                      {% endfor %}
+                      </div>
+                   </div> 
+                </td>
+              </tr>
+              {% endfor %}
               {% endfor %}
             </tbody>
           </table>
@@ -165,5 +206,19 @@ $(".delete_identity").click(function(e){
          }
        },"json");
   });
+  $(document).ready(function(){
+      $('.content_block').hide();
+      $('.open_table').click(function(){
+        var nxt_tr = $(this).parent().parent().next();
+        nxt_tr.toggle();
+        $('.content_block').not(nxt_tr).hide();
+        if($(this).children('i').hasClass('fa-caret-down')){
+          $(this).children('i').removeClass('fa-caret-down').addClass('fa-caret-up');
+        }
+        else{
+          $(this).children('i').removeClass('fa-caret-up').addClass('fa-caret-down');
+        }
+      })
+    });
 </script>
 {% endblock %}

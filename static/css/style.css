@@ -651,3 +651,32 @@ form input, form textarea {
   content: "";
   padding: 0;
 }
+
+#dev-table .content_block{
+	background: #ddd;
+}
+#dev-table .content_block .content_left, #dev-table .content_block .content_right{
+	padding:0;
+}
+#dev-table .content_block ul{
+	margin:0px;
+	padding:5px;
+}
+#dev-table .content_block ul li{
+	list-style: none;
+	padding:8px 6px;
+	font-size: 13px;
+	border-bottom: 1px solid #ccc;
+	font-weight: normal;
+}
+#dev-table .content_block ul li strong{
+	font-weight: 600;
+	margin-right: 20px;
+}
+#dev-table .open_table i{
+	display: inline-block;
+    background: #dc0023;
+    color: #fff;
+    padding: 4px 7px;
+    font-size: 15px;
+}

@@ -18,7 +18,7 @@
         <h3 class="panel-title">Send Email</h3>
       </div>
       <div class="panel-body">
-        <form class='form_cls form_block' action="{% url 'send_email' region_name %}?identity=identity" method="post" enctype='multipart/form-data'>
+        <form class='form_cls form_block' action="{% url 'send_email' region_name %}?identity={{identity}}" method="post" enctype='multipart/form-data'>
           {% csrf_token %}
           <div class="form-group" id="source">
             <label>From:</label>

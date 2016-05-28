@@ -652,8 +652,9 @@ def emails_list(request):
     identities = ses_client.get_identity_verification_attributes(
         Identities=response["Identities"]
     )
+    notifications = ses_client.get_identity_notification_attributes(Identities=response["Identities"])
     return render(request, "ses/email_adresses.html",
-                           {"regions": REGIONS, "response": identities["VerificationAttributes"],
+                           {"notifications": notifications["NotificationAttributes"], "regions": REGIONS, "response": identities["VerificationAttributes"],
                             "selected_region": request.POST.get("region") if request.POST.get("region") else "us-west-2"})
 
 

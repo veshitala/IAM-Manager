@@ -10,7 +10,8 @@ from django.http.response import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from botocore.exceptions import ClientError
 from iam.models import REGIONS
-from iam.forms import BucketForm, ChangePasswordForm, EmailAddressForm, SendEmailForm
+from iam.forms import BucketForm, ChangePasswordForm, EmailAddressForm, \
+    SendEmailForm
 
 
 def home(request):
@@ -29,8 +30,10 @@ def user_logout(request):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Logout
-    Description:when user hits the url "^/logout$" this function is called, user gets logged out and redirected to login template.
-    Here when user log out respective user access key, secret key, username will be removed from session.
+    Description:when user hits the url "^/logout$" this function is called,
+    user gets logged out and redirected to login template.
+    Here when user log out respective user access key, secret key,
+    username will be removed from session.
     '''
     if 'access_key' in request.session:
         request.session['access_key'] = None
@@ -49,15 +52,13 @@ def login(request):
     Tasks Involved:login
     Description:when user hits the url "^$" this function is called
     First this function renders to "login" template,
-    Here user login by entering valid access key and secret keys, then these varibles are stored in django session for further use.
+    Here user login by entering valid access key and secret keys,
+    then these varibles are stored in django session for further use.
     '''
-
+    client = boto3.client('iam',
+                          aws_access_key_id=request.POST.get("access_key"),
+                          aws_secret_access_key=request.POST.get("secret_key"))
     if request.method == "POST":
-        client = boto3.client(
-           'iam',
-           aws_access_key_id=request.POST.get("access_key"),
-           aws_secret_access_key=request.POST.get("secret_key")
-        )
         try:
             if request.POST.get("access_key") and request.POST.get("secret_key") and request.POST.get("username"):
                 client.get_login_profile(UserName=request.POST.get("username"))
@@ -74,7 +75,7 @@ def login(request):
             return HttpResponse(json.dumps(data))
 
         except ClientError as e:
-            data = {"error": True, "response": "Credentials are not valid."}
+            data = {"error": True, "response": str(e)}
             return HttpResponse(json.dumps(data))
     if 'access_key' in request.session:
         return HttpResponseRedirect(reverse("home"))
@@ -86,18 +87,17 @@ def add_iam_user(request):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Add IAM User
-    Description:when user hits the url "^iam/user/add/$" this function is called
-    First this function renders to "add_iam_user" template,
-    New IAM user can create only when User updated settings(Access key, secret Keys).
-    Connecting to boto3 IAM client with AWS Access key and Secret Keys.
-    when post data is requested, new IAM user is created, when user selects to generate access and
+    Description:when user hits the url "^iam/user/add/$" this function is
+    called, First this function renders to "add_iam_user" template,
+    New IAM user can create only when User updated settings
+    (Access key, secret Keys).Connecting to boto3 IAM client with AWS
+    Access key and Secret Keys.when post data is requested,
+    new IAM user is created, when user selects to generate access and
     secret keys then acess keys are generated and saved in our database.
     '''
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+    client = boto3.client('iam',
+                          aws_access_key_id=request.session["access_key"],
+                          aws_secret_access_key=request.session["secret_key"])
 
     if request.method == "POST":
         if request.POST.get("username"):
@@ -107,7 +107,6 @@ def add_iam_user(request):
                         try:
                             try:
                                 response_without_keys = client.create_user(Path="/", UserName=request.POST.get("username"))
-                            
                                 client.create_login_profile(
                                     UserName=request.POST.get("username"),
                                     Password=request.POST.get("password"),
@@ -132,9 +131,13 @@ def add_iam_user(request):
 
                 if request.POST.get("generate_keys"):
                     response = client.create_access_key(UserName=request.POST.get("username"))
-                    data = {"error": False, "iam_username": response["AccessKey"]["UserName"], "iam_access_key": response["AccessKey"]["AccessKeyId"], "iam_secret_key": response["AccessKey"]["SecretAccessKey"]}
+                    data = {"error": False,
+                            "iam_username": response["AccessKey"]["UserName"],
+                            "iam_access_key": response["AccessKey"]["AccessKeyId"],
+                            "iam_secret_key": response["AccessKey"]["SecretAccessKey"]}
                 else:
-                    data = {"error": False, "iam_username": response_without_keys["User"]["UserName"]}
+                    data = {"error": False,
+                            "iam_username": response_without_keys["User"]["UserName"]}
                 return HttpResponse(json.dumps(data))
             except ClientError as e:
                 data = {"error": True, "response": str(e)}
@@ -150,46 +153,58 @@ def generate_custom_policy(request, user_name):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Create Custom Policy
-    Description:when user hits the url "^iam/custom-policy/(<user_name>)/$" this function is called
-    First this function renders to "custom_policy" template,
-    Here by selecting Amazon service(S3), policy name and provided details custom policy is created.
+    Description:when user hits the url "^iam/custom-policy/(<user_name>)/$"
+    this function is called. First this function renders to "custom_policy"
+    template, Here by selecting Amazon service(S3), policy name and
+    provided details custom policy is created.
     Returns Error message for the data invalid or not given correctly.
     '''
     client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+        'iam',
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
     client_s3 = boto3.client(
         's3',
         aws_access_key_id=request.session["access_key"],
         aws_secret_access_key=request.session["secret_key"])
     client_ec2 = boto3.client(
-       'ec2', region_name=request.POST.get("region"),
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+        'ec2',
+        region_name=request.POST.get("region"),
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
+    client_ses = boto3.client(
+        'ses', region_name=request.POST.get("region"),
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
     response_instances = client_ec2.describe_instances()
     response_buckets = client_s3.list_buckets()
+    ses_verified_identities = client_ses.list_verified_email_addresses()
+    iam_user = client.get_user(UserName=user_name)
+    arn = (iam_user["User"]["Arn"]).split("::")[-1]
+    user_console_id = arn.split(":")[0]
     if request.method == "POST":
         statement = []
         for dict in json.loads(request.POST.get("policy_document")):
             l = []
             action = ""
             for index, a in enumerate(dict["action"]):
-                action = dict["aws_service"].split(":")[0]+':'+str(a)
+                action = dict["aws_service"].split(":")[0] + ':' + str(a)
                 l.append(action)
             text = {}
             text['Effect'] = "Deny"
             text['Action'] = l
             if dict["aws_service"] == "s3":
-                text['Resource'] = "arn:aws:s3:::"+dict["service_type"]+"/*"
+                text['Resource'] = "arn:aws:s3:::" + dict["service_type"] + "/*"
                 statement.append(text)
 
             elif dict["aws_service"] == "ec2":
-                text['Resource'] = "arn:aws:ec2:"+request.POST.get("region")+"::"+dict["service_type"]+"/*"
+                text['Resource'] = "arn:aws:ec2:" + request.POST.get("region") + "::" + dict["service_type"] + "/*"
                 statement.append(text)
-        policy_document = '{"Version": "2012-10-17","Statement": ['+str(json.dumps(statement)).strip("[]")+']}'
+
+            elif dict["aws_service"] == "ses":
+                text['Resource'] = "arn:aws:ses:" + request.POST.get("region") + ":" + user_console_id + ":identity/" + dict["service_type"]
+                statement.append(text)
+        policy_document = '{"Version": "2012-10-17","Statement": [' + str(json.dumps(statement)).strip("[]") + ']}'
         policy_document = policy_document.replace("'", '"')
         if request.POST.get("show_policy") == "show":
             data = {'error': False, "policy_document": json.loads(policy_document)}
@@ -210,9 +225,13 @@ def generate_custom_policy(request, user_name):
                 data = {'error': True, 'exception_error': str(e)}
                 return HttpResponse(json.dumps(data))
     else:
-        return render(request, "policies.html", {"regions": REGIONS, "user_name": user_name, "response_buckets": response_buckets["Buckets"],
-                                                 "response_instances": response_instances["Reservations"],
-                                                 "user_policies": user_policies["AttachedPolicies"], "response": response["Policies"]})
+        return render(request, "policies.html", {
+            "regions": REGIONS, "user_name": user_name,
+            "response_buckets": response_buckets["Buckets"],
+            "response_instances": response_instances["Reservations"],
+            "user_policies": user_policies["AttachedPolicies"],
+            "response": response["Policies"],
+            "identities": ses_verified_identities["VerifiedEmailAddresses"]})
 
 
 def iam_user_details_download(request):
@@ -220,7 +239,8 @@ def iam_user_details_download(request):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Download Access Credentials
-    Description:This function generates CSV file download with username, Access Keys, Secret Keys.
+    Description:This function generates CSV file download with
+    username, Access Keys, Secret Keys.
     '''
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="Credentials.csv"'
@@ -236,17 +256,21 @@ def iam_users_list(request):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Add IAM User List
-    Description:when user hits the url "^iam/user/list/$" this function is called
+    Description:when user hits the url "^iam/user/list/$"
+    this function is called.
     First this function renders to "iam_users_list" template,
     Connecting to boto3 IAM client, Displays all IAM Users.
     '''
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
-    response = client.list_users()
-    return render(request, "iam_user/iam_users_list.html", {"response": response["Users"]})
+    client = boto3.client('iam',
+                          aws_access_key_id=request.session["access_key"],
+                          aws_secret_access_key=request.session["secret_key"])
+    try:
+        response = client.list_users()
+        response = response["Users"]
+    except:
+        response = []
+    return render(request, "iam_user/iam_users_list.html", {
+        "response": response})
 
 
 def iam_user_detail(request, user_name):
@@ -254,19 +278,21 @@ def iam_user_detail(request, user_name):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Add IAM User Detail
-    Description:when user hits the url "^iam/user/detail/$" this function is called
+    Description:when user hits the url "^iam/user/detail/$"
+    this function is called.
     First this function renders to "iam_users_list" template,
     Connecting to boto3 IAM client, Display details of specific IAM User.
     '''
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+    client = boto3.client('iam',
+                          aws_access_key_id=request.session["access_key"],
+                          aws_secret_access_key=request.session["secret_key"])
 
     if request.GET.get("generate_keys"):
         response = client.create_access_key(UserName=user_name)
-        data = {"error": False, "iam_username": response["AccessKey"]["UserName"], "iam_access_key": response["AccessKey"]["AccessKeyId"], "iam_secret_key": response["AccessKey"]["SecretAccessKey"]}
+        data = {"error": False,
+                "iam_username": response["AccessKey"]["UserName"],
+                "iam_access_key": response["AccessKey"]["AccessKeyId"],
+                "iam_secret_key": response["AccessKey"]["SecretAccessKey"]}
         return HttpResponse(json.dumps(data))
 
     response = client.get_user(UserName=user_name)
@@ -279,9 +305,10 @@ def iam_user_detail(request, user_name):
         UserName=response["User"]["UserName"],
     )
 
-    return render(request, "iam_user/iam_user_detail.html", {"response": response["User"],
-                  "user_policies": user_policies["AttachedPolicies"],
-                  "user_name": user_name, "user_access_keys": user_access_keys["AccessKeyMetadata"]})
+    return render(request, "iam_user/iam_user_detail.html", {
+        "response": response["User"], "user_name": user_name,
+        "user_policies": user_policies["AttachedPolicies"],
+        "user_access_keys": user_access_keys["AccessKeyMetadata"]})
 
 
 def iam_user_change_password(request, user_name):
@@ -289,15 +316,16 @@ def iam_user_change_password(request, user_name):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Change password of IAM User
-    Description:when user hits the url "^iam/user/change-password/username/$" this function is called
+    Description:when user hits the url "^iam/user/change-password/username/$"
+    this function is called.
     First this function renders to "change_password" template,
-    Connecting to boto3 IAM client, Checks whether the new password and confirm password matches, if not raises an error if not save the data.
+    Connecting to boto3 IAM client, Checks whether the
+    new password and confirm password matches, if not raises an error
+    if not save the data.
     '''
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+    client = boto3.client('iam',
+                          aws_access_key_id=request.session["access_key"],
+                          aws_secret_access_key=request.session["secret_key"])
     if request.method == 'POST':
         form = ChangePasswordForm(request.POST)
         if form.is_valid():
@@ -307,7 +335,7 @@ def iam_user_change_password(request, user_name):
             else:
                 if request.POST.get("type") == "change_password":
                     try:
-                        response = client.update_login_profile(
+                        client.update_login_profile(
                             UserName=user_name,
                             Password=request.POST.get("new_password"),
                             PasswordResetRequired=False
@@ -337,7 +365,8 @@ def iam_user_change_password(request, user_name):
         get_profile = True
     except:
         get_profile = False
-    return render(request, 'iam_user/change_password.html', {"user_name": user_name, "get_profile": get_profile}) 
+    return render(request, 'iam_user/change_password.html', {
+        "user_name": user_name, "get_profile": get_profile})
 
 
 def policies_list(request, user_name):
@@ -345,22 +374,18 @@ def policies_list(request, user_name):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Policies list
-    Description:when user hits the url "^policies/username/$" this function is called
+    Description:when user hits the url "^policies/username/$"
+    this function is called.
     First this function renders to "policies" template,
     Connecting to boto3 IAM client,when user can attach multiple policies.
     '''
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+    client = boto3.client('iam',
+                          aws_access_key_id=request.session["access_key"],
+                          aws_secret_access_key=request.session["secret_key"])
     user_policies = client.list_attached_user_policies(
         UserName=user_name
     )
-    response = client.list_policies(
-            Scope='All',
-            OnlyAttached=False
-            )
+    response = client.list_policies(Scope='All', OnlyAttached=False)
     client_s3 = boto3.client(
         's3',
         aws_access_key_id=request.session["access_key"],
@@ -371,9 +396,23 @@ def policies_list(request, user_name):
        aws_access_key_id=request.session["access_key"],
        aws_secret_access_key=request.session["secret_key"]
     )
-    response_instances = client_ec2.describe_instances()
-    response_buckets = client_s3.list_buckets()
+    client_ses = boto3.client(
+        'ses', region_name=request.POST.get("region") if request.POST.get("region") else "us-west-2",
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
+    try:
+        ses_verified_identities = client_ses.list_verified_email_addresses()
+        ses_verified_identities = ses_verified_identities["VerifiedEmailAddresses"]
 
+        response_instances = client_ec2.describe_instances()
+        response_instances = response_instances["Reservations"]
+
+        response_buckets = client_s3.list_buckets()
+        response_buckets = response_buckets["Buckets"]
+    except:
+        ses_verified_identities = []
+        response_instances = []
+        response_buckets = []
     if request.method == "POST":
         if request.POST.getlist("policy"):
             for policy in request.POST.getlist("policy"):
@@ -381,19 +420,28 @@ def policies_list(request, user_name):
                     UserName=user_name,
                     PolicyArn=policy
                 )
-            return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
+            return HttpResponseRedirect(reverse("iam_user_detail",
+                                        kwargs={'user_name': user_name}))
         if request.POST.get("region"):
             l = []
-            for instance in response_instances["Reservations"]:
-                for i in instance["Instances"]:
-                    dict = {}
-                    dict["name"] = i["KeyName"]
-                    dict["region"] = i["Placement"]["AvailabilityZone"]
-                    l.append(dict)
-            data = {'error': False, "response_instances": l}
-            return HttpResponse(json.dumps(data))
+            if response_instances:
+                for instance in response_instances:
+                    for i in instance["Instances"]:
+                        dict = {}
+                        dict["name"] = i["KeyName"]
+                        dict["region"] = i["Placement"]["AvailabilityZone"]
+                        l.append(dict)
+                data = {'error': False,
+                        "response_instances": l,
+                        "identities": ses_verified_identities}
+                return HttpResponse(json.dumps(data))
     else:
-        return render(request, "policies.html", {"regions": REGIONS, "user_policies": user_policies["AttachedPolicies"], "response": response["Policies"], "user_name": user_name, "response_buckets": response_buckets["Buckets"], "response_instances": response_instances["Reservations"]})
+        return render(request, "policies.html", {
+            "identities": ses_verified_identities, "regions": REGIONS,
+            "user_policies": user_policies["AttachedPolicies"],
+            "response": response["Policies"], "user_name": user_name,
+            "response_buckets": response_buckets,
+            "response_instances": response_instances})
 
 
 def detach_user_policies(request, user_name):
@@ -401,21 +449,21 @@ def detach_user_policies(request, user_name):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:Policy detach
-    Description:when user hits the url "^iam-userpolicy/detach/username/$" this function is called
+    Description:when user hits the url "^iam-userpolicy/detach/username/$"
+    this function is called.
     First this function renders to 'iam_user_detail' template,
     Connecting to boto3 IAM client,detach policy for the particular user.
     '''
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+    client = boto3.client('iam',
+                          aws_access_key_id=request.session["access_key"],
+                          aws_secret_access_key=request.session["secret_key"])
 
     client.detach_user_policy(
         UserName=user_name,
         PolicyArn=request.GET.get("policy_arn")
     )
-    return HttpResponseRedirect(reverse("iam_user_detail", kwargs={'user_name': user_name}))
+    return HttpResponseRedirect(reverse("iam_user_detail",
+                                kwargs={'user_name': user_name}))
 
 
 def delete_iam_user(request, user_name):
@@ -423,15 +471,14 @@ def delete_iam_user(request, user_name):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:delete User
-    Description:when user hits the url "^iam/user/delete/username/$" this function is called
+    Description:when user hits the url "^iam/user/delete/username/$"
+    this function is called.
     First this function renders to 'iam_user_list' template,
     Connecting to boto3 IAM client,deletes particular user.
     '''
-    client = boto3.client(
-       'iam',
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+    client = boto3.client('iam',
+                          aws_access_key_id=request.session["access_key"],
+                          aws_secret_access_key=request.session["secret_key"])
     if request.method == "POST":
         if request.POST.get("iam_user_name"):
             if request.POST.get("iam_user_name") == user_name:
@@ -441,7 +488,7 @@ def delete_iam_user(request, user_name):
                 )
                 if user_access_keys["AccessKeyMetadata"]:
                     for key in user_access_keys["AccessKeyMetadata"]:
-                        delete_access_keys = client.delete_access_key(
+                        client.delete_access_key(
                             UserName=user_name,
                             AccessKeyId=key["AccessKeyId"]
                         )
@@ -454,14 +501,10 @@ def delete_iam_user(request, user_name):
                         PolicyArn=policy["PolicyArn"]
                     )
                 try:
-                    s = client.delete_login_profile(
-                        UserName=user_name
-                    )
+                    client.delete_login_profile(UserName=user_name)
                 except:
                     pass
-                response = client.delete_user(
-                    UserName=user_name
-                )
+                client.delete_user(UserName=user_name)
                 data = {'error': False}
                 return HttpResponse(json.dumps(data))
             else:
@@ -479,7 +522,8 @@ def ec2_instances_list(request):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:EC2 Instances List
-    Description:when user hits the url "^ec2-instances/list/$" this function is called
+    Description:when user hits the url "^ec2-instances/list/$"
+    this function is called.
     First this function renders to 'EC2/instances' template,
     Connecting to boto3 IAM client,Lists all EC2 Instances.
     '''
@@ -488,9 +532,14 @@ def ec2_instances_list(request):
        aws_access_key_id=request.session["access_key"],
        aws_secret_access_key=request.session["secret_key"]
     )
-    response_instances = client_ec2.describe_instances()
-    return render(request, "EC2/instances.html", {"regions": REGIONS, "instances": response_instances['Reservations'],
-                                                  "region": request.POST.get("region") if request.POST.get("region") else "us-west-2"})
+    try:
+        response_instances = client_ec2.describe_instances()
+        response_instances = response_instances['Reservations']
+    except:
+        response_instances = []
+    return render(request, "EC2/instances.html", {
+        "regions": REGIONS, "instances": response_instances,
+        "region": request.POST.get("region") if request.POST.get("region") else "us-west-2"})
 
 
 def s3_buckets_list(request):
@@ -498,7 +547,8 @@ def s3_buckets_list(request):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:EC2 Instances List
-    Description:when user hits the url "^s3-buckets/list/$" this function is called
+    Description:when user hits the url "^s3-buckets/list/$"
+    this function is called.
     First this function renders to 'S3/buckets' template,
     Connecting to boto3 IAM client,Lists all S3 Buckets.
     '''
@@ -506,17 +556,24 @@ def s3_buckets_list(request):
         's3',
         aws_access_key_id=request.session["access_key"],
         aws_secret_access_key=request.session["secret_key"])
-
-    response_buckets = client_s3.list_buckets()
-    return render(request, "S3/buckets.html", {"regions": REGIONS, "buckets": response_buckets["Buckets"]})
+    try:
+        response_buckets = client_s3.list_buckets()
+        response_buckets = response_buckets["Buckets"]
+    except:
+        response_buckets = []
+    return render(request, "S3/buckets.html", {
+        "regions": REGIONS, "buckets": response_buckets})
 
 
 def send_email(request, region_name):
-    ses_client = boto3.client('ses', region_name=region_name,
-                              aws_access_key_id=request.session["access_key"],
-                              aws_secret_access_key=request.session["secret_key"])
+    ses_client = boto3.client(
+        'ses', region_name=region_name,
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
     if request.method == 'GET':
-        return render(request, 'ses/send_email.html', {"region_name": region_name, "identity": request.GET.get("identity")})
+        return render(request, 'ses/send_email.html', {
+            "region_name": region_name,
+            "identity": request.GET.get("identity")})
     else:
         form = SendEmailForm(request.POST)
         if form.is_valid():
@@ -540,7 +597,8 @@ def send_email(request, region_name):
 
             except Exception as e:
                 data = {'error': True, 'message': str(e)}
-                return HttpResponse(json.dumps(data), content_type='application/json')
+                return HttpResponse(json.dumps(data),
+                                    content_type='application/json')
         else:
             data = {'error': True, 'response': form.errors}
             return HttpResponse(json.dumps(data))
@@ -551,17 +609,21 @@ def instance_detail(request, instance_id, region_name):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:EC2 Instances detail
-    Description:when user hits the url "^ec2-instances/detail/<instance_id>/<region_name>/$" this function is called
-    First this function renders to 'EC2/detail' template,
-    Connecting to boto3 IAM client,displays the detailed information of specific Instance.
+    Description:when user hits the url
+    "^ec2-instances/detail/<instance_id>/<region_name>/$"
+    this function is called. First this function renders
+    to 'EC2/detail' template, Connecting to boto3 IAM client,displays
+    the detailed information of specific Instance.
     '''
     client = boto3.client(
-       'ec2', region_name=region_name if region_name else "us-west-2",
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
+        'ec2', region_name=region_name if region_name else "us-west-2",
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"]
     )
     response_instance = client.describe_instances(InstanceIds=[instance_id])
-    return render(request, "EC2/detail.html", {"region_name": region_name, "response_instance": response_instance['Reservations']})
+    return render(request, "EC2/detail.html", {
+        "region_name": region_name,
+        "response_instance": response_instance['Reservations']})
 
 
 def change_instance_status(request, instance_id, region_name):
@@ -569,26 +631,22 @@ def change_instance_status(request, instance_id, region_name):
     Authored by:Swetha
     Other Modules Involved:
     Tasks Involved:EC2 Instances detail
-    Description:when user hits the url "^ec2-instances/change-status/<instance_id>/<region_name>/$" this function is called
-    Connecting to boto3 IAM client,changes the status of specific instances(start, stop, terminate).
+    Description:when user hits the url
+    "^ec2-instances/change-status/<instance_id>/<region_name>/$"
+    this function is called.
+    Connecting to boto3 IAM client,changes the status
+    of specific instances(start, stop, terminate).
     '''
     client = boto3.client(
-       'ec2', region_name=region_name if region_name else "us-west-2",
-       aws_access_key_id=request.session["access_key"],
-       aws_secret_access_key=request.session["secret_key"]
-    )
+        'ec2', region_name=region_name if region_name else "us-west-2",
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
     if request.GET.get("action") == "start":
-        response = client.start_instances(
-            InstanceIds=[instance_id]
-        )
+        client.start_instances(InstanceIds=[instance_id])
     elif request.GET.get("action") == "stop":
-        response = client.stop_instances(
-            InstanceIds=[instance_id]
-        )
+        client.stop_instances(InstanceIds=[instance_id])
     elif request.GET.get("action") == "terminate":
-        response = client.terminate_instances(
-            InstanceIds=[instance_id]
-        )
+        client.terminate_instances(InstanceIds=[instance_id])
     return HttpResponseRedirect(reverse("ec2_instances_list"))
 
 
@@ -619,16 +677,14 @@ def create_s3_bucket(request):
 
 def delete_bucket(request, bucket_name):
     client_s3 = boto3.client(
-            's3',
-            aws_access_key_id=request.session["access_key"],
-            aws_secret_access_key=request.session["secret_key"])
+        's3',
+        aws_access_key_id=request.session["access_key"],
+        aws_secret_access_key=request.session["secret_key"])
     if request.method == "POST":
         if request.POST.get("s3_bucket_name"):
             if request.POST.get("s3_bucket_name") == bucket_name:
                 try:
-                    response = client_s3.delete_bucket(
-                        Bucket=bucket_name
-                    )
+                    client_s3.delete_bucket(Bucket=bucket_name)
                     data = {'error': False}
                 except Exception as e:
                     data = {'error': True, 'message': str(e)}
@@ -644,23 +700,30 @@ def delete_bucket(request, bucket_name):
 
 
 def emails_list(request):
-    ses_client = boto3.client('ses',
+    ses_client = boto3.client(
+        'ses',
         region_name=request.POST.get("region") if request.POST.get("region") else "us-west-2",
         aws_access_key_id=request.session["access_key"],
         aws_secret_access_key=request.session["secret_key"])
-    response = ses_client.list_identities(IdentityType='EmailAddress')
-    identities = ses_client.get_identity_verification_attributes(
-        Identities=response["Identities"]
-    )
-    notifications = ses_client.get_identity_notification_attributes(Identities=response["Identities"])
-    return render(request, "ses/email_adresses.html",
-                           {"notifications": notifications["NotificationAttributes"], "regions": REGIONS, "response": identities["VerificationAttributes"],
-                            "selected_region": request.POST.get("region") if request.POST.get("region") else "us-west-2"})
+    try:
+        response = ses_client.list_identities(IdentityType='EmailAddress')
+        identities = ses_client.get_identity_verification_attributes(
+            Identities=response["Identities"]
+        )
+        identities = identities["VerificationAttributes"]
+        notifications = ses_client.get_identity_notification_attributes(Identities=response["Identities"])
+        notifications = notifications["NotificationAttributes"]
+    except:
+        identities = []
+        notifications = []
+    return render(request, "ses/email_adresses.html", {
+        "notifications": notifications, "regions": REGIONS,
+        "response": identities, "selected_region": request.POST.get("region") if request.POST.get("region") else "us-west-2"})
 
 
 def add_new_email_adress(request, region_name):
     ses_client = boto3.client(
-        'ses',  region_name=region_name,
+        'ses', region_name=region_name,
         aws_access_key_id=request.session["access_key"],
         aws_secret_access_key=request.session["secret_key"])
     if request.method == "POST":
@@ -682,14 +745,14 @@ def add_new_email_adress(request, region_name):
 
 def delete_identity(request, identity, region_name):
     ses_client = boto3.client(
-        'ses',  region_name=region_name,
+        'ses', region_name=region_name,
         aws_access_key_id=request.session["access_key"],
         aws_secret_access_key=request.session["secret_key"])
     if request.method == "POST":
         if request.POST.get("identity_email"):
             if request.POST.get("identity_email") == identity:
                 try:
-                    response = ses_client.delete_identity(
+                    ses_client.delete_identity(
                         Identity=identity
                     )
                     data = {'error': False}

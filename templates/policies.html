@@ -54,6 +54,7 @@
                         <option value="">Amazon Service</option>
                         <option value="s3">S3</option>
                         <option value="ec2">EC2</option>
+                        <option value="ses">SES</option>
                       </select>
                 </div>
               </div>
@@ -164,7 +165,6 @@ buckets_dict["class"] = "s3"
 buckets_list.push(buckets_dict)
 {% endfor %}
 
-
   $(".choose_policy_type").change(function(e){
   	$(".choose_radio").removeClass("red")
     if ($('#existing_policy').is(':checked')){
@@ -198,6 +198,8 @@ buckets_list.push(buckets_dict)
 
 ec2_actions = ["AcceptVpcPeeringConnection", "AllocateAddress", "AssignPrivateIpAddresses", "AssociateAddress", "AssociateDhcpOptions", "AssociateRouteTable", "AttachClassicLinkVpc", "AttachInternetGateway", "AttachNetworkInterface", "AttachVolume", "AttachVpnGateway", "AuthorizeSecurityGroupEgress", "AuthorizeSecurityGroupIngress", "BundleInstance", "CancelBundleTask", "CancelConversionTask", "CancelExportTask", "CancelImportTask", "CancelReservedInstancesListing", "CancelSpotFleetRequests","CancelSpotInstanceRequests", "ConfirmProductInstance", "CopyImage", "CopySnapshot", "CreateCustomerGateway", "CreateDhcpOptions", "CreateFlowLogs", "CreateImage", "CreateInstanceExportTask", "CreateInternetGateway", "CreateKeyPair", "CreateNatGateway", "CreateNetworkAcl", "CreateNetworkAclEntry", "CreateNetworkInterface", "CreatePlacementGroup", "CreateReservedInstancesListing", "CreateRoute", "CreateRouteTable", "CreateSecurityGroup", "CreateSnapshot","CreateSpotDatafeedSubscription", "CreateSubnet", "CreateTags", "CreateVolume", "CreateVpc", "CreateVpcEndpoint", "CreateVpcPeeringConnection", "CreateVpnConnection", "CreateVpnConnectionRoute", "CreateVpnGateway", "DeleteCustomerGateway", "DeleteDhcpOptions", "DeleteFlowLogs", "DeleteInternetGateway", "DeleteKeyPair", "DeleteNatGateway", "DeleteNetworkAcl", "DeleteNetworkAclEntry", "DeleteNetworkInterface", "DeletePlacementGroup", "DeleteRoute", "DeleteRouteTable","DeleteSecurityGroup", "DeleteSnapshot", "DeleteSpotDatafeedSubscription", "DeleteSubnet", "DeleteTags", "DeleteVolume", "DeleteVpc", "DeleteVpcEndpoints", "DeleteVpcPeeringConnection", "DeleteVpnConnection", "DeleteVpnConnectionRoute", "DeleteVpnGateway"]
 
+ses_actions = ["DeleteIdentity", "ListIdentities", "SendBounce", "SendEmail", "SendRawEmail", "VerifyEmailAddress", "VerifyEmailIdentity"]
+
   $(s3_actions).each(function(e, item){
   actions = {}
   actions['class'] = "s3"
@@ -208,6 +210,13 @@ ec2_actions = ["AcceptVpcPeeringConnection", "AllocateAddress", "AssignPrivateIp
   $(ec2_actions).each(function(e, item){
   actions = {}
   actions['class'] = "ec2"
+  actions['value'] = item
+  actions["name"] = item
+  actions_list.push(actions)
+  });
+  $(ses_actions).each(function(e, item){
+  actions = {}
+  actions['class'] = "ses"
   actions['value'] = item
   actions["name"] = item
   actions_list.push(actions)
@@ -235,6 +244,16 @@ ec2_actions = ["AcceptVpcPeeringConnection", "AllocateAddress", "AssignPrivateIp
           }); 
           }, 'json');
         }
+  else if (select_service == "ses"){
+    $(".select_blocks."+div_class+" .select_block1 select.service_type option").remove()
+    service_type_select.append("<option value=''>Please Select Option</option>")
+    $.post("{% url 'policies_list' user_name %}", {"region": region, 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val()}, function(data){
+      $(data.identities).each(function(e){
+          service_type_select.append("<option value="+data.identities[e]+">"+data.identities[e]+"</option>")
+          }); 
+          }, 'json');
+        }
+
   
   }
 
@@ -243,9 +262,13 @@ ec2_actions = ["AcceptVpcPeeringConnection", "AllocateAddress", "AssignPrivateIp
     $.post("{% url 'policies_list' user_name %}", {"region": region, 'csrfmiddlewaretoken':$("input[name='csrfmiddlewaretoken']").val()}, function(data){
         $(".service_type option").remove()
       options = ''
+      ses_options = ''
       $(data.response_instances).each(function(e){
         options += ("<option value="+data.response_instances[e]["name"]+">"+data.response_instances[e]["name"]+"</option>")
         }); 
+      $(data.identities).each(function(e){
+          ses_options += ("<option value="+data.identities[e]+">"+data.identities[e]+"</option>")
+          });
       buckets_options = ""
       $(buckets_list).each(function(e){
          buckets_options += ("<option value="+buckets_list[e]["value"]+">"+buckets_list[e]["name"]+"</option>")
@@ -259,6 +282,9 @@ ec2_actions = ["AcceptVpcPeeringConnection", "AllocateAddress", "AssignPrivateIp
         }
         else if(s == "s3"){
         $(this).append(buckets_options)
+        }
+        else if(s == "ses"){
+        $(this).append(ses_options)
         }
       })
     }, 'json');

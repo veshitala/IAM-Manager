@@ -7,7 +7,7 @@
     <li><a href="{% url 'ec2_instances_list' %}">{{region_name}}</a></li>
     {% for instance in response_instance %}
     {% for i in instance.Instances %}
-    <li><a class="active" href="#">{{i.KeyName}}></a></li>
+    <li><a class="active" href="#">{{i.KeyName}}</a></li>
     {% endfor %}
     {% endfor %}
   </ol>

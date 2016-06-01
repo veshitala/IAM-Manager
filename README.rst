@@ -21,6 +21,6 @@ Managing AWS resources among IAM users easily and securely.
    :target: https://heroku.com/deploy?template=https://github.com/MicroPyramid/IAM-Manager
    :alt: Heroku Button
 
-**Documentation** is `avaliable online
-<http://iam-manager.readthedocs.org/>`_, or in the docs
-directory of the project.
+For additional help you can `Contact us here`_
+
+.. _contact us here: https://micropyramid.com/contact-us/

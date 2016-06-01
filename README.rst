@@ -1,17 +1,21 @@
 IAM Manager
-=========
+-----------
 
-Managing AWS resources among IAM users easily and securely.
-	* AWS Identity and Access Management (IAM) Users
-	* Simple Storage Service (S3)
-	* Amazon Elastic Compute Cloud (EC2)
-	* Amazon Simple Email Service (SES)
-
+.. image:: https://readthedocs.org/projects/iam-manager/badge/?version=latest
+   :target: http://iam-manager.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+   
 .. image:: https://travis-ci.org/MicroPyramid/IAM-Manager.svg?branch=master
    :target: https://travis-ci.org/MicroPyramid/IAM-Manager
 
-.. image:: https://coveralls.io/repos/MicroPyramid/IAM-Manager/badge.png?branch=master
-   :target: https://coveralls.io/r/MicroPyramid/IAM-Manager?branch=master
+   
+Managing AWS resources among IAM users easily and securely.
+
+* AWS Identity and Access Management (IAM) Users
+* Simple Storage Service (S3)
+* Amazon Elastic Compute Cloud (EC2)
+* Amazon Simple Email Service (SES)
+
 
 .. image:: https://www.herokucdn.com/deploy/button.svg
    :target: https://heroku.com/deploy?template=https://github.com/MicroPyramid/IAM-Manager

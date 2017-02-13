@@ -21,6 +21,9 @@ Managing AWS resources among IAM users easily and securely.
    :target: https://heroku.com/deploy?template=https://github.com/MicroPyramid/IAM-Manager
    :alt: Heroku Button
 
+Visit our Amazon web Services(AWS) page `Here`_
+
 For additional help you can `Contact us here`_
 
 .. _contact us here: https://micropyramid.com/contact-us/
+.. _Here: https://micropyramid.com/django-ecommerce-development/

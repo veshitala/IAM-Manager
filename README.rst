@@ -18,7 +18,7 @@ Managing AWS resources among IAM users easily and securely.
 
 
 .. image:: https://www.herokucdn.com/deploy/button.svg
-   :target: https://heroku.com/deploy?template=https://github.com/MicroPyramid/IAM-Manager
+   :target: https://heroku.com/deploy?template=https://github.com/veshitala/IAM-Manager
    :alt: Heroku Button
 
 Visit our Amazon web Services(AWS) page `Here`_
